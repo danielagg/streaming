@@ -4,6 +4,7 @@ import argparse
 import ctypes
 import queue
 import subprocess
+import sys
 import threading
 import time
 import tkinter as tk
@@ -13,10 +14,21 @@ from typing import Any, Callable
 
 from .audio import WindowsAudioPlayer
 from .config import ActionDefinition, AppConfig, load_config
+from .hotkeys import GlobalHotkeyListener, HotkeyRegistrationError
 from .remix import RemixClient, RemixConnectionError, RemixProtocolError
+from .remix_startup import (
+    RemixStartupSettingsError,
+    enforce_remix_startup,
+    read_float32,
+)
+from .remix_window import RemixWindowControlError, select_preview_mode
 
 
-APP_DIRECTORY = Path(__file__).resolve().parent.parent
+APP_DIRECTORY = (
+    Path(sys.executable).resolve().parent
+    if getattr(sys, "frozen", False)
+    else Path(__file__).resolve().parent.parent
+)
 CONFIG_PATH = APP_DIRECTORY / "config.json"
 
 COLORS = {
@@ -42,6 +54,7 @@ class ActionCard(tk.Canvas):
         action: ActionDefinition,
         callback: Callable[[ActionDefinition], None],
         fonts: dict[str, tkfont.Font],
+        hotkey_label: str | None = None,
     ) -> None:
         super().__init__(
             parent,
@@ -54,6 +67,7 @@ class ActionCard(tk.Canvas):
         self.action = action
         self._callback = callback
         self._fonts = fonts
+        self._hotkey_label = hotkey_label
         self._hovered = False
         self._enabled = True
         self._active = False
@@ -166,10 +180,13 @@ class ActionCard(tk.Canvas):
             fill=self.action.accent if self._enabled else COLORS["dim"],
             font=self._fonts["micro_bold"],
         )
+        duration_text = f"{self.action.duration_ms / 1000:g} SEC"
+        if self._hotkey_label:
+            duration_text = f"{self._hotkey_label}  /  {duration_text}"
         self.create_text(
             width - 24,
             23,
-            text=f"{self.action.duration_ms / 1000:g} SEC",
+            text=duration_text,
             anchor="ne",
             fill=secondary,
             font=self._fonts["micro"],
@@ -253,6 +270,8 @@ class CommandDeckApp:
         self._health_after_id: str | None = None
         self._countdown_after_id: str | None = None
         self._countdown_end: float | None = None
+        self._remix_process_id: int | None = None
+        self._hotkey_listener: GlobalHotkeyListener | None = None
 
         self._configure_window()
         self._fonts = self._create_fonts()
@@ -268,6 +287,7 @@ class CommandDeckApp:
                 daemon=True,
             )
             self._worker.start()
+            self._start_global_hotkeys()
             launch_succeeded, launch_message = self._launch_remix_model()
             self._set_connection_status(
                 "CONNECTING", COLORS["amber"], "Contacting PNGTuber Remix…"
@@ -295,10 +315,11 @@ class CommandDeckApp:
         self.root.option_add("*tearOff", False)
 
         try:
-            icon_path = (
-                APP_DIRECTORY.parent / "Berry" / "ProfilePic.png"
-            ).resolve()
-            if icon_path.is_file():
+            icon_path = APP_DIRECTORY / "assets" / "CommandDeckIconMaster.png"
+            icon_file_path = APP_DIRECTORY / "assets" / "CommandDeck.ico"
+            if icon_file_path.is_file():
+                self.root.iconbitmap(default=str(icon_file_path))
+            elif icon_path.is_file():
                 self._icon_image = tk.PhotoImage(file=icon_path)
                 self.root.iconphoto(True, self._icon_image)
         except tk.TclError:
@@ -427,10 +448,24 @@ class CommandDeckApp:
 
         cards = tk.Frame(shell, background=COLORS["background"])
         cards.pack(fill="both", expand=True)
+        hotkey_labels: dict[str, str] = {}
+        if (
+            self.config.global_hotkeys is not None
+            and self.config.global_hotkeys.enabled
+        ):
+            presses = self.config.global_hotkeys.presses_required
+            hotkey_labels = {
+                binding.action_id: f"{binding.key} ×{presses}"
+                for binding in self.config.global_hotkeys.bindings
+            }
         for index, action in enumerate(self.config.actions):
             cards.grid_columnconfigure(index, weight=1, uniform="actions")
             card = ActionCard(
-                cards, action, self.request_action, self._fonts
+                cards,
+                action,
+                self.request_action,
+                self._fonts,
+                hotkey_labels.get(action.id),
             )
             horizontal_padding = (0, 9) if index == 0 else (9, 9)
             if index == len(self.config.actions) - 1:
@@ -515,6 +550,38 @@ class CommandDeckApp:
         )
         self._work_queue.put(("connect", None))
 
+    def _start_global_hotkeys(self) -> None:
+        settings = self.config.global_hotkeys
+        if settings is None or not settings.enabled:
+            return
+        listener = GlobalHotkeyListener(
+            {
+                binding.key: binding.action_id
+                for binding in settings.bindings
+            },
+            self._queue_hotkey_press,
+            presses_required=settings.presses_required,
+            press_window_ms=settings.press_window_ms,
+        )
+        try:
+            listener.start()
+        except (HotkeyRegistrationError, OSError, ValueError) as error:
+            listener.stop()
+            self._ui_queue.put(("hotkey_error", str(error)))
+            return
+        self._hotkey_listener = listener
+
+    def _queue_hotkey_press(
+        self,
+        key: str,
+        action_id: str,
+        count: int,
+        triggered: bool,
+    ) -> None:
+        self._ui_queue.put(
+            ("hotkey_press", key, action_id, count, triggered)
+        )
+
     def _worker_loop(self) -> None:
         while not self._stop_event.is_set():
             try:
@@ -562,6 +629,24 @@ class CommandDeckApp:
                     )
                     return
 
+                if (
+                    wait_for_startup
+                    and self.config.force_remix_preview
+                    and self._remix_process_id is not None
+                ):
+                    preferences_path = (
+                        self.config.remix_executable_path.parent
+                        / "Preferences.pRDat"
+                    )
+                    ui_scale = read_float32(
+                        preferences_path, "ui_scaling"
+                    )
+                    select_preview_mode(
+                        self._remix_process_id,
+                        ui_scale=ui_scale,
+                    )
+                    self._ui_queue.put(("restore_focus",))
+
                 self._ui_queue.put(
                     (
                         "connection",
@@ -571,7 +656,12 @@ class CommandDeckApp:
                     )
                 )
                 return
-            except (RemixConnectionError, RemixProtocolError) as error:
+            except (
+                RemixConnectionError,
+                RemixProtocolError,
+                RemixStartupSettingsError,
+                RemixWindowControlError,
+            ) as error:
                 self.client.close()
                 if wait_for_startup and time.monotonic() < deadline:
                     self._stop_event.wait(1)
@@ -602,15 +692,26 @@ class CommandDeckApp:
             return False, f"Remix model was not found: {model_path}"
 
         try:
-            subprocess.Popen(
+            enforce_remix_startup(
+                preferences_path=executable_path.parent / "Preferences.pRDat",
+                model_path=model_path,
+                preview=self.config.force_remix_preview,
+                transparent=self.config.force_transparent_background,
+            )
+            remix_process = subprocess.Popen(
                 [str(executable_path), str(model_path)],
                 cwd=executable_path.parent,
                 close_fds=True,
                 creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
             )
-        except OSError as error:
+            self._remix_process_id = remix_process.pid
+        except (OSError, RemixStartupSettingsError) as error:
             return False, f"Could not open the Berry Remix model: {error}"
-        return True, "Opening Berry.pngRemix and waiting for Remix…"
+        return (
+            True,
+            "Opening Berry.pngRemix in transparent Preview mode and "
+            "waiting for Remix…",
+        )
 
     def _check_health(self) -> None:
         if self._busy_action_id is not None:
@@ -744,6 +845,27 @@ class CommandDeckApp:
                     if self._busy_action_id is None:
                         self._set_connection_status(label, color, message)
                         self._set_activity(label, message)
+                elif event_name == "restore_focus":
+                    self._restore_command_deck_focus()
+                elif event_name == "hotkey_press":
+                    _, key, action_id, count, triggered = event
+                    action = self._action_by_id(action_id)
+                    if triggered:
+                        self.request_action(action)
+                    elif self._busy_action_id is None:
+                        required = (
+                            self.config.global_hotkeys.presses_required
+                            if self.config.global_hotkeys is not None
+                            else 3
+                        )
+                        self._set_activity(
+                            "HOTKEY",
+                            f"{key}: {count}/{required} presses for "
+                            f"{action.name}.",
+                        )
+                elif event_name == "hotkey_error":
+                    _, message = event
+                    self._set_activity("HOTKEY ERROR", message)
                 elif event_name == "action_started":
                     _, action_id, action_name, normal_state, duration_ms = event
                     if self._busy_action_id == action_id:
@@ -836,6 +958,84 @@ class CommandDeckApp:
         self._activity_code.configure(text=code)
         self._activity_message.configure(text=message)
 
+    def _restore_command_deck_focus(self) -> None:
+        self.root.deiconify()
+        self.root.lift()
+        self.root.focus_force()
+        self._force_windows_foreground()
+        self.root.after(250, self._force_windows_foreground)
+        self.root.after(700, self._force_windows_foreground)
+
+    def _force_windows_foreground(self) -> None:
+        try:
+            user32 = ctypes.WinDLL("user32", use_last_error=True)
+            user32.GetAncestor.argtypes = [
+                ctypes.c_void_p,
+                ctypes.c_uint,
+            ]
+            user32.GetAncestor.restype = ctypes.c_void_p
+            user32.GetForegroundWindow.argtypes = []
+            user32.GetForegroundWindow.restype = ctypes.c_void_p
+            user32.GetWindowThreadProcessId.argtypes = [
+                ctypes.c_void_p,
+                ctypes.POINTER(ctypes.c_ulong),
+            ]
+            user32.GetWindowThreadProcessId.restype = ctypes.c_ulong
+            user32.AttachThreadInput.argtypes = [
+                ctypes.c_ulong,
+                ctypes.c_ulong,
+                ctypes.c_bool,
+            ]
+            user32.AttachThreadInput.restype = ctypes.c_bool
+            user32.ShowWindow.argtypes = [ctypes.c_void_p, ctypes.c_int]
+            user32.ShowWindow.restype = ctypes.c_bool
+            user32.BringWindowToTop.argtypes = [ctypes.c_void_p]
+            user32.BringWindowToTop.restype = ctypes.c_bool
+            user32.SetForegroundWindow.argtypes = [ctypes.c_void_p]
+            user32.SetForegroundWindow.restype = ctypes.c_bool
+            user32.SetFocus.argtypes = [ctypes.c_void_p]
+            user32.SetFocus.restype = ctypes.c_void_p
+
+            root_window = user32.GetAncestor(self.root.winfo_id(), 2)
+            foreground_window = user32.GetForegroundWindow()
+            if not root_window or foreground_window == root_window:
+                return
+
+            foreground_process_id = ctypes.c_ulong()
+            foreground_thread = user32.GetWindowThreadProcessId(
+                foreground_window,
+                ctypes.byref(foreground_process_id),
+            )
+            command_deck_process_id = ctypes.c_ulong()
+            command_deck_thread = user32.GetWindowThreadProcessId(
+                root_window,
+                ctypes.byref(command_deck_process_id),
+            )
+
+            attached = False
+            if foreground_thread and command_deck_thread:
+                attached = bool(
+                    user32.AttachThreadInput(
+                        foreground_thread,
+                        command_deck_thread,
+                        True,
+                    )
+                )
+            try:
+                user32.ShowWindow(root_window, 9)
+                user32.BringWindowToTop(root_window)
+                user32.SetForegroundWindow(root_window)
+                user32.SetFocus(root_window)
+            finally:
+                if attached:
+                    user32.AttachThreadInput(
+                        foreground_thread,
+                        command_deck_thread,
+                        False,
+                    )
+        except (AttributeError, OSError, tk.TclError):
+            pass
+
     def _update_clock(self) -> None:
         self._clock_label.configure(text=time.strftime("%H:%M:%S"))
         if not self._stop_event.is_set():
@@ -862,6 +1062,8 @@ class CommandDeckApp:
         try:
             self.audio.stop()
         finally:
+            if self._hotkey_listener is not None:
+                self._hotkey_listener.stop()
             worker = getattr(self, "_worker", None)
             if worker is not None and worker.is_alive():
                 worker.join(timeout=1.0)
@@ -881,12 +1083,22 @@ def _set_windows_dpi_awareness() -> None:
             pass
 
 
+def _set_windows_application_identity() -> None:
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+            "Daniel.CommandDeck"
+        )
+    except (AttributeError, OSError):
+        pass
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--smoke-test", action="store_true")
     args, _unknown = parser.parse_known_args()
 
     _set_windows_dpi_awareness()
+    _set_windows_application_identity()
     config = load_config(CONFIG_PATH)
     root = tk.Tk()
     app = CommandDeckApp(

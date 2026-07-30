@@ -13,7 +13,16 @@ from unittest.mock import patch
 
 from command_deck.app import CommandDeckApp
 from command_deck.config import ActionDefinition, AppConfig, load_config
+from command_deck.hotkeys import MultiPressDetector
 from command_deck.remix import RemixClient
+from command_deck.remix_startup import (
+    GODOT_BOOL_VARIANT,
+    GODOT_INT_VARIANT,
+    enforce_scalar,
+    read_float32,
+    read_scalar,
+)
+from command_deck.remix_window import _scaled_point
 
 
 PROJECT_DIRECTORY = Path(__file__).resolve().parent.parent
@@ -30,6 +39,23 @@ class ConfigTests(unittest.TestCase):
             ["Whiskey Sip", "Croaking", "Fly Catch"],
         )
         self.assertTrue(config.auto_launch_remix)
+        self.assertTrue(config.force_remix_preview)
+        self.assertTrue(config.force_transparent_background)
+        self.assertIsNotNone(config.global_hotkeys)
+        self.assertTrue(config.global_hotkeys.enabled)
+        self.assertEqual(config.global_hotkeys.presses_required, 3)
+        self.assertEqual(config.global_hotkeys.press_window_ms, 1200)
+        self.assertEqual(
+            {
+                binding.key: binding.action_id
+                for binding in config.global_hotkeys.bindings
+            },
+            {
+                "F13": "whiskey",
+                "F14": "croak",
+                "F15": "fly",
+            },
+        )
         self.assertIsNotNone(config.remix_executable_path)
         self.assertTrue(config.remix_executable_path.is_file())
         self.assertEqual(
@@ -169,6 +195,45 @@ class WebSocketFrameTests(unittest.TestCase):
         self.assertEqual(states, [{"name": "Idle", "is_current": True}])
 
 
+class MultiPressDetectorTests(unittest.TestCase):
+    def test_third_quick_press_triggers_and_resets_sequence(self) -> None:
+        detector = MultiPressDetector(
+            presses_required=3,
+            press_window_seconds=1.2,
+        )
+
+        self.assertEqual(
+            detector.register_press("F13", now=10.0),
+            (1, False),
+        )
+        self.assertEqual(
+            detector.register_press("F13", now=10.3),
+            (2, False),
+        )
+        self.assertEqual(
+            detector.register_press("F13", now=10.6),
+            (3, True),
+        )
+        self.assertEqual(
+            detector.register_press("F13", now=10.8),
+            (1, False),
+        )
+
+    def test_press_outside_window_does_not_complete_sequence(self) -> None:
+        detector = MultiPressDetector(
+            presses_required=3,
+            press_window_seconds=1.0,
+        )
+
+        detector.register_press("F14", now=20.0)
+        detector.register_press("F14", now=20.4)
+
+        self.assertEqual(
+            detector.register_press("F14", now=21.1),
+            (2, False),
+        )
+
+
 class ActionControllerTests(unittest.TestCase):
     def test_action_enters_target_and_restores_current_normal_state(self) -> None:
         action = ActionDefinition(
@@ -209,6 +274,8 @@ class ActionControllerTests(unittest.TestCase):
             app_name="Test",
             websocket_url="ws://127.0.0.1:1",
             auto_launch_remix=False,
+            force_remix_preview=False,
+            force_transparent_background=False,
             remix_executable_path=None,
             remix_model_path=None,
             actions=(action,),
@@ -236,11 +303,24 @@ class ActionControllerTests(unittest.TestCase):
         app = object.__new__(CommandDeckApp)
         app.config = config
 
-        with patch("command_deck.app.subprocess.Popen") as popen:
+        with (
+            patch("command_deck.app.enforce_remix_startup") as enforce,
+            patch("command_deck.app.subprocess.Popen") as popen,
+        ):
+            popen.return_value.pid = 4123
             succeeded, message = app._launch_remix_model()
 
         self.assertTrue(succeeded)
         self.assertIn("Berry.pngRemix", message)
+        self.assertIn("transparent Preview mode", message)
+        enforce.assert_called_once_with(
+            preferences_path=(
+                config.remix_executable_path.parent / "Preferences.pRDat"
+            ),
+            model_path=config.remix_model_path,
+            preview=True,
+            transparent=True,
+        )
         popen.assert_called_once_with(
             [
                 str(config.remix_executable_path),
@@ -250,6 +330,70 @@ class ActionControllerTests(unittest.TestCase):
             close_fds=True,
             creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
         )
+        self.assertEqual(app._remix_process_id, 4123)
+
+
+class RemixStartupSettingsTests(unittest.TestCase):
+    def test_production_files_are_configured_for_transparent_preview(
+        self,
+    ) -> None:
+        config = load_config(PROJECT_DIRECTORY / "config.json")
+        preferences = (
+            config.remix_executable_path.parent / "Preferences.pRDat"
+        )
+
+        self.assertEqual(
+            read_scalar(preferences, "mode", GODOT_INT_VARIANT),
+            1,
+        )
+        self.assertEqual(
+            read_scalar(
+                config.remix_model_path,
+                "is_transparent",
+                GODOT_BOOL_VARIANT,
+            ),
+            1,
+        )
+        self.assertEqual(
+            read_float32(preferences, "ui_scaling"),
+            1.0,
+        )
+
+    def test_scalar_enforcement_changes_only_the_target_value(self) -> None:
+        from tempfile import TemporaryDirectory
+
+        with TemporaryDirectory() as temporary_directory:
+            settings_path = Path(temporary_directory) / "Preferences.pRDat"
+            fixture = (
+                b"before"
+                + b"\x15\0\0\0\x04\0\0\0mode"
+                + b"\x02\0\0\0\x00\0\0\0"
+                + b"after"
+            )
+            settings_path.write_bytes(fixture)
+
+            changed = enforce_scalar(
+                settings_path,
+                "mode",
+                GODOT_INT_VARIANT,
+                1,
+                allowed_values={0, 1, 2},
+            )
+
+            self.assertTrue(changed)
+            self.assertEqual(
+                read_scalar(settings_path, "mode", GODOT_INT_VARIANT),
+                1,
+            )
+            expected = fixture.replace(
+                b"\x02\0\0\0\x00\0\0\0",
+                b"\x02\0\0\0\x01\0\0\0",
+            )
+            self.assertEqual(settings_path.read_bytes(), expected)
+
+    def test_preview_click_coordinates_follow_remix_ui_scale(self) -> None:
+        self.assertEqual(_scaled_point((61, 16), 1.0), (61, 16))
+        self.assertEqual(_scaled_point((61, 16), 1.5), (92, 24))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,11 @@
 @echo off
 setlocal
 
+if exist "%~dp0CommandDeck.exe" (
+    start "" "%~dp0CommandDeck.exe"
+    exit /b 0
+)
+
 py -3.13 -c "import tkinter" >nul 2>&1
 if errorlevel 1 (
     echo Command Deck needs Python 3.13 with Tkinter.

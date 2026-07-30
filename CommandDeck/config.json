@@ -2,6 +2,18 @@
   "app_name": "Command Deck",
   "websocket_url": "ws://127.0.0.1:9321",
   "auto_launch_remix": true,
+  "force_remix_preview": true,
+  "force_transparent_background": true,
+  "global_hotkeys": {
+    "enabled": true,
+    "presses_required": 3,
+    "press_window_ms": 1200,
+    "bindings": {
+      "F13": "whiskey",
+      "F14": "croak",
+      "F15": "fly"
+    }
+  },
   "remix_executable_path": "C:/Users/Daniel/Downloads/PNGTuber-Remix-win32-x86_64/PNGTuber-Remix.exe",
   "remix_model_path": "../Berry/Berry.pngRemix",
   "actions": [
