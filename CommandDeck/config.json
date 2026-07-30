@@ -1,0 +1,34 @@
+{
+  "app_name": "Command Deck",
+  "websocket_url": "ws://127.0.0.1:9321",
+  "actions": [
+    {
+      "id": "whiskey",
+      "number": "01",
+      "name": "Whiskey Sip",
+      "state_name": "Whiskey Sip",
+      "description": "A measured two-second toast.",
+      "duration_ms": 2000,
+      "accent": "#D5A653"
+    },
+    {
+      "id": "croak",
+      "number": "02",
+      "name": "Croak Twice",
+      "state_name": "Croaking",
+      "description": "Two synchronized calls with audio.",
+      "duration_ms": 3000,
+      "accent": "#8EBB74",
+      "audio_path": "../Berry/PNGTuber_Remix_Rig/Croaking/Croak Twice.mp3"
+    },
+    {
+      "id": "fly",
+      "number": "03",
+      "name": "Fly Catch",
+      "state_name": "Fly Catch",
+      "description": "Fast tongue strike and recovery.",
+      "duration_ms": 1400,
+      "accent": "#D96D91"
+    }
+  ]
+}
