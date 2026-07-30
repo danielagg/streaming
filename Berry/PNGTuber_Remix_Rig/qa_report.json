@@ -1,0 +1,139 @@
+{
+  "canvas": {
+    "width": 512,
+    "height": 1254
+  },
+  "crop_box_from_generated_sources": [
+    350,
+    0,
+    862,
+    1254
+  ],
+  "base_alpha": {
+    "transparent": 328932,
+    "partial": 8163,
+    "opaque": 304953
+  },
+  "layer_alpha": {
+    "eyes_open": {
+      "transparent": 631321,
+      "partial": 2559,
+      "opaque": 8168
+    },
+    "eyes_half": {
+      "transparent": 631305,
+      "partial": 3777,
+      "opaque": 6966
+    },
+    "eyes_deep": {
+      "transparent": 635468,
+      "partial": 1899,
+      "opaque": 4681
+    },
+    "eyes_closed": {
+      "transparent": 638814,
+      "partial": 1922,
+      "opaque": 1312
+    },
+    "mouth_closed": {
+      "transparent": 629421,
+      "partial": 3165,
+      "opaque": 9462
+    },
+    "mouth_narrow": {
+      "transparent": 628482,
+      "partial": 2826,
+      "opaque": 10740
+    },
+    "mouth_wide": {
+      "transparent": 622735,
+      "partial": 2966,
+      "opaque": 16347
+    },
+    "mouth_round": {
+      "transparent": 628623,
+      "partial": 2772,
+      "opaque": 10653
+    },
+    "mouth_open": {
+      "transparent": 620548,
+      "partial": 4251,
+      "opaque": 17249
+    }
+  },
+  "dynamic_pixels_covered_by_base_ratio": 0.954142,
+  "dynamic_overhang_pixels": 1990,
+  "note": "Overhang pixels are expected at moustache curl tips and antialiased outer-eye contours; face roots remain painted in the base.",
+  "mouth_frame_map": [
+    {
+      "frame": 0,
+      "label": "TH_CH_SH",
+      "art_state": "mouth_narrow"
+    },
+    {
+      "frame": 1,
+      "label": "S_Z",
+      "art_state": "mouth_narrow"
+    },
+    {
+      "frame": 2,
+      "label": "T_D",
+      "art_state": "mouth_narrow"
+    },
+    {
+      "frame": 3,
+      "label": "E",
+      "art_state": "mouth_wide"
+    },
+    {
+      "frame": 4,
+      "label": "F_V",
+      "art_state": "mouth_narrow"
+    },
+    {
+      "frame": 5,
+      "label": "I",
+      "art_state": "mouth_wide"
+    },
+    {
+      "frame": 6,
+      "label": "O",
+      "art_state": "mouth_round"
+    },
+    {
+      "frame": 7,
+      "label": "B_P_M",
+      "art_state": "mouth_closed"
+    },
+    {
+      "frame": 8,
+      "label": "R",
+      "art_state": "mouth_round"
+    },
+    {
+      "frame": 9,
+      "label": "U_OO",
+      "art_state": "mouth_round"
+    },
+    {
+      "frame": 10,
+      "label": "A_AH",
+      "art_state": "mouth_open"
+    },
+    {
+      "frame": 11,
+      "label": "G_K",
+      "art_state": "mouth_open"
+    },
+    {
+      "frame": 12,
+      "label": "L_N",
+      "art_state": "mouth_narrow"
+    },
+    {
+      "frame": 13,
+      "label": "SILENT",
+      "art_state": "mouth_closed"
+    }
+  ]
+}

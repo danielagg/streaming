@@ -1,0 +1,102 @@
+{
+  "source": "C:\\Users\\Daniel\\Desktop\\Streaming\\Berry\\PNGTuber_Remix_Rig\\Fly_Catch\\sources\\fly_catch_keyposes_transparent.png",
+  "production_sheet": "C:\\Users\\Daniel\\Desktop\\Streaming\\Berry\\PNGTuber_Remix_Rig\\Fly_Catch\\sheets\\fly_catch_14f_7x2.png",
+  "cell_size": [
+    1056,
+    1292
+  ],
+  "sheet_grid": [
+    7,
+    2
+  ],
+  "sheet_size": [
+    7392,
+    2584
+  ],
+  "frames": 14,
+  "fps": 10,
+  "duration_seconds": 1.4,
+  "art_scale": 2.4,
+  "body_center_x": 650,
+  "feet_y": 1235,
+  "poses": {
+    "01_notice": {
+      "bbox": [
+        262,
+        85,
+        908,
+        1235
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "magenta_pixels": 0
+    },
+    "02_aim": {
+      "bbox": [
+        195,
+        114,
+        886,
+        1235
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "magenta_pixels": 0
+    },
+    "03_strike": {
+      "bbox": [
+        31,
+        88,
+        905,
+        1235
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "magenta_pixels": 0
+    },
+    "04_catch": {
+      "bbox": [
+        56,
+        85,
+        903,
+        1235
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "magenta_pixels": 0
+    },
+    "05_retract": {
+      "bbox": [
+        320,
+        90,
+        898,
+        1235
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "magenta_pixels": 0
+    },
+    "06_satisfied": {
+      "bbox": [
+        404,
+        88,
+        896,
+        1235
+      ],
+      "alpha_extrema": [
+        0,
+        255
+      ],
+      "magenta_pixels": 0
+    }
+  }
+}
