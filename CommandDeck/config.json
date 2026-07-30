@@ -1,6 +1,9 @@
 {
   "app_name": "Command Deck",
   "websocket_url": "ws://127.0.0.1:9321",
+  "auto_launch_remix": true,
+  "remix_executable_path": "C:/Users/Daniel/Downloads/PNGTuber-Remix-win32-x86_64/PNGTuber-Remix.exe",
+  "remix_model_path": "../Berry/Berry.pngRemix",
   "actions": [
     {
       "id": "whiskey",

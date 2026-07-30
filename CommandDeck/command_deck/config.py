@@ -21,6 +21,9 @@ class ActionDefinition:
 class AppConfig:
     app_name: str
     websocket_url: str
+    auto_launch_remix: bool
+    remix_executable_path: Path | None
+    remix_model_path: Path | None
     actions: tuple[ActionDefinition, ...]
 
 
@@ -51,8 +54,22 @@ def load_config(config_path: Path) -> AppConfig:
     if not actions:
         raise ValueError("Command Deck needs at least one configured action.")
 
+    executable_value = raw.get("remix_executable_path")
+    remix_executable_path = (
+        (base_directory / executable_value).resolve()
+        if executable_value
+        else None
+    )
+    model_value = raw.get("remix_model_path")
+    remix_model_path = (
+        (base_directory / model_value).resolve() if model_value else None
+    )
+
     return AppConfig(
         app_name=raw.get("app_name", "Command Deck"),
         websocket_url=raw["websocket_url"],
+        auto_launch_remix=bool(raw.get("auto_launch_remix", False)),
+        remix_executable_path=remix_executable_path,
+        remix_model_path=remix_model_path,
         actions=tuple(actions),
     )

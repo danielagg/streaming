@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 import base64
 import hashlib
+import queue
 import socket
+import subprocess
 import threading
 import unittest
-import queue
 from pathlib import Path
+from unittest.mock import patch
 
 from command_deck.app import CommandDeckApp
 from command_deck.config import ActionDefinition, AppConfig, load_config
@@ -27,6 +29,18 @@ class ConfigTests(unittest.TestCase):
             [action.state_name for action in config.actions],
             ["Whiskey Sip", "Croaking", "Fly Catch"],
         )
+        self.assertTrue(config.auto_launch_remix)
+        self.assertIsNotNone(config.remix_executable_path)
+        self.assertTrue(config.remix_executable_path.is_file())
+        self.assertEqual(
+            config.remix_model_path,
+            (
+                PROJECT_DIRECTORY.parent
+                / "Berry"
+                / "Berry.pngRemix"
+            ).resolve(),
+        )
+        self.assertTrue(config.remix_model_path.is_file())
 
     def test_audio_path_resolves_to_existing_mp3(self) -> None:
         config = load_config(PROJECT_DIRECTORY / "config.json")
@@ -194,6 +208,9 @@ class ActionControllerTests(unittest.TestCase):
         app.config = AppConfig(
             app_name="Test",
             websocket_url="ws://127.0.0.1:1",
+            auto_launch_remix=False,
+            remix_executable_path=None,
+            remix_model_path=None,
             actions=(action,),
         )
         app.client = FakeClient()
@@ -211,6 +228,28 @@ class ActionControllerTests(unittest.TestCase):
         events = list(app._ui_queue.queue)
         self.assertEqual(events[0][0], "action_started")
         self.assertEqual(events[1][0], "action_complete")
+
+    def test_remix_launcher_passes_the_berry_model_to_the_executable(
+        self,
+    ) -> None:
+        config = load_config(PROJECT_DIRECTORY / "config.json")
+        app = object.__new__(CommandDeckApp)
+        app.config = config
+
+        with patch("command_deck.app.subprocess.Popen") as popen:
+            succeeded, message = app._launch_remix_model()
+
+        self.assertTrue(succeeded)
+        self.assertIn("Berry.pngRemix", message)
+        popen.assert_called_once_with(
+            [
+                str(config.remix_executable_path),
+                str(config.remix_model_path),
+            ],
+            cwd=config.remix_executable_path.parent,
+            close_fds=True,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
 
 
 if __name__ == "__main__":

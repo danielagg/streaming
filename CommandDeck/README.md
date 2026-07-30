@@ -15,14 +15,24 @@ and does not launch PowerShell.
 
 ## Start it
 
-1. Start PNGTuber Remix.
-2. In Remix, start the local WebSocket server on port `9321`.
-3. Double-click `Start Command Deck.cmd`.
-4. Wait for the top-right status to read `ONLINE`.
-5. Click an action card.
+1. Double-click `Start Command Deck.cmd`.
+2. Command Deck automatically opens `Berry/Berry.pngRemix`, waits up to 30
+   seconds for Remix, and changes its top-right status to `ONLINE`.
+3. Click an action card.
 
 If Remix was not ready when Command Deck opened, click the red `OFFLINE` status
-in the top-right corner to retry.
+in the top-right corner to retry. Its local WebSocket server must be configured
+to start automatically on port `9321`.
+
+Set `auto_launch_remix` to `false` in `config.json` if you ever want to disable
+the automatic model launch.
+
+Command Deck currently launches:
+
+`C:/Users/Daniel/Downloads/PNGTuber-Remix-win32-x86_64/PNGTuber-Remix.exe`
+
+If Remix is moved or updated into another folder, change
+`remix_executable_path` in `config.json`.
 
 ## Required Remix state names
 
@@ -38,8 +48,8 @@ duplicate triggers and competing WebSocket connections.
 ## Configuration
 
 Edit `config.json` to change the WebSocket address, action duration, state name,
-label, description, accent color, or audio path. Paths are resolved relative to
-the `CommandDeck` folder.
+label, description, accent color, audio path, or Remix executable. Relative
+paths are resolved from the `CommandDeck` folder.
 
 The application uses only Python's standard library:
 

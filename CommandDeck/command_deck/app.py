@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import ctypes
 import queue
+import subprocess
 import threading
 import time
 import tkinter as tk
@@ -267,10 +268,15 @@ class CommandDeckApp:
                 daemon=True,
             )
             self._worker.start()
+            launch_succeeded, launch_message = self._launch_remix_model()
             self._set_connection_status(
                 "CONNECTING", COLORS["amber"], "Contacting PNGTuber Remix…"
             )
-            self._work_queue.put(("connect", None))
+            self._set_activity(
+                "LAUNCHING" if launch_succeeded else "LAUNCH ERROR",
+                launch_message,
+            )
+            self._work_queue.put(("startup_connect", None))
             self._schedule_health_check()
         else:
             self._set_connection_status(
@@ -517,7 +523,9 @@ class CommandDeckApp:
                 continue
 
             try:
-                if job == "connect":
+                if job == "startup_connect":
+                    self._connect_and_validate(wait_for_startup=True)
+                elif job == "connect":
                     self._connect_and_validate()
                 elif job == "health":
                     self._check_health()
@@ -526,48 +534,83 @@ class CommandDeckApp:
             finally:
                 self._work_queue.task_done()
 
-    def _connect_and_validate(self) -> None:
-        try:
-            self.client.connect()
-            states = self.client.list_states()
-            available_names = {
-                str(state.get("name")) for state in states if state.get("name")
-            }
-            missing = [
-                action.state_name
-                for action in self.config.actions
-                if action.state_name not in available_names
-            ]
-            if missing:
-                missing_text = ", ".join(missing)
+    def _connect_and_validate(self, *, wait_for_startup: bool = False) -> None:
+        deadline = time.monotonic() + 30 if wait_for_startup else 0
+        while not self._stop_event.is_set():
+            try:
+                self.client.connect()
+                states = self.client.list_states()
+                available_names = {
+                    str(state.get("name"))
+                    for state in states
+                    if state.get("name")
+                }
+                missing = [
+                    action.state_name
+                    for action in self.config.actions
+                    if action.state_name not in available_names
+                ]
+                if missing:
+                    missing_text = ", ".join(missing)
+                    self._ui_queue.put(
+                        (
+                            "connection",
+                            "CONFIG ERROR",
+                            COLORS["red"],
+                            f"Missing Remix state(s): {missing_text}",
+                        )
+                    )
+                    return
+
                 self._ui_queue.put(
                     (
                         "connection",
-                        "CONFIG ERROR",
+                        "ONLINE",
+                        COLORS["green"],
+                        f"Remix online. {len(states)} states reported.",
+                    )
+                )
+                return
+            except (RemixConnectionError, RemixProtocolError) as error:
+                self.client.close()
+                if wait_for_startup and time.monotonic() < deadline:
+                    self._stop_event.wait(1)
+                    continue
+                self._ui_queue.put(
+                    (
+                        "connection",
+                        "OFFLINE",
                         COLORS["red"],
-                        f"Missing Remix state(s): {missing_text}",
+                        f"{error} Click OFFLINE to retry.",
                     )
                 )
                 return
 
-            self._ui_queue.put(
-                (
-                    "connection",
-                    "ONLINE",
-                    COLORS["green"],
-                    f"Remix online. {len(states)} states reported.",
-                )
+    def _launch_remix_model(self) -> tuple[bool, str]:
+        if not self.config.auto_launch_remix:
+            return True, "Automatic Remix launch is disabled in config.json."
+
+        model_path = self.config.remix_model_path
+        executable_path = self.config.remix_executable_path
+        if executable_path is None:
+            return False, "No PNGTuber Remix executable is configured."
+        if not executable_path.is_file():
+            return False, f"PNGTuber Remix was not found: {executable_path}"
+        if model_path is None:
+            return False, "No Remix model path is configured."
+        if not model_path.is_file():
+            return False, f"Remix model was not found: {model_path}"
+
+        try:
+            subprocess.Popen(
+                [str(executable_path), str(model_path)],
+                cwd=executable_path.parent,
+                close_fds=True,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
             )
-        except (RemixConnectionError, RemixProtocolError) as error:
-            self.client.close()
-            self._ui_queue.put(
-                (
-                    "connection",
-                    "OFFLINE",
-                    COLORS["red"],
-                    f"{error} Click OFFLINE to retry.",
-                )
-            )
+        except OSError as error:
+            return False, f"Could not open the Berry Remix model: {error}"
+        return True, "Opening Berry.pngRemix and waiting for Remix…"
 
     def _check_health(self) -> None:
         if self._busy_action_id is not None:
