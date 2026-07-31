@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://command-deck.local/protocol.schema.json",
+  "title": "Command Deck backend protocol",
+  "oneOf": [
+    { "$ref": "#/$defs/command" },
+    { "$ref": "#/$defs/event" }
+  ],
+  "$defs": {
+    "command": {
+      "type": "object",
+      "required": ["version", "id", "type"],
+      "properties": {
+        "version": { "const": 1 },
+        "id": { "type": "string", "minLength": 1 },
+        "type": {
+          "enum": ["action.trigger", "service.reconnect", "backend.shutdown"]
+        },
+        "payload": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": ["version", "type", "payload"],
+      "properties": {
+        "version": { "const": 1 },
+        "requestId": { "type": "string" },
+        "type": {
+          "enum": [
+            "backend.ready",
+            "command.result",
+            "service.status",
+            "remix.preview.ready",
+            "chat.message",
+            "berry.action.progress",
+            "berry.action.completed",
+            "berry.action.error"
+          ]
+        },
+        "payload": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

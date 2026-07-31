@@ -1,0 +1,66 @@
+{
+  "name": "command-deck",
+  "productName": "Command Deck",
+  "version": "0.1.0",
+  "description": "Portrait-first streaming command center",
+  "author": "Command Deck",
+  "private": true,
+  "main": "dist-electron/main/index.js",
+  "scripts": {
+    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"npm:dev:electron\"",
+    "dev:electron": "wait-on tcp:5173 && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .",
+    "local": "npm run build && electron .",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.electron.json",
+    "test": "vitest run --config vitest.config.ts",
+    "clean:electron": "node -e \"require('node:fs').rmSync('dist-electron',{recursive:true,force:true})\"",
+    "build": "npm run typecheck && vite build && npm run clean:electron && tsc -p tsconfig.electron.json",
+    "build:backend": "python -m PyInstaller --noconfirm --clean --name command-deck-backend --onefile --paths backend --collect-all twitchio backend/run_backend.py --distpath backend/dist --workpath backend/build --specpath backend/build",
+    "stage:resources": "node scripts/stage-resources.mjs",
+    "package": "npm run build && npm run build:backend && npm run stage:resources && electron-forge package",
+    "make": "npm run build && npm run build:backend && npm run stage:resources && electron-forge make"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "ws": "latest"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "latest",
+    "@electron-forge/maker-squirrel": "latest",
+    "@electron-forge/maker-zip": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "@types/ws": "latest",
+    "concurrently": "latest",
+    "cross-env": "latest",
+    "electron": "latest",
+    "eslint": "^8.57.1",
+    "typescript": "latest",
+    "vite": "latest",
+    "vitest": "latest",
+    "wait-on": "latest"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "es2022": true,
+      "node": true
+    },
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "parserOptions": {
+      "ecmaVersion": "latest",
+      "sourceType": "module"
+    },
+    "ignorePatterns": [
+      "dist/",
+      "dist-electron/",
+      "out/"
+    ]
+  }
+}

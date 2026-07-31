@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "command-deck-backend"
+version = "0.1.0"
+description = "Local Python sidecar for Command Deck"
+requires-python = ">=3.11"
+dependencies = ["aiohttp>=3.11,<4"]
+
+[project.optional-dependencies]
+twitch = ["twitchio>=3.1,<4"]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.25", "ruff>=0.9"]
+
+[project.scripts]
+command-deck-backend = "command_deck.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["command_deck*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+

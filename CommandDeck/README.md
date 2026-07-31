@@ -1,84 +1,84 @@
 # Command Deck
 
-Command Deck is a Windows control surface for stream actions. The first control
-group, **Berry Animations**, provides three large on-screen controls plus
-temporary global hotkeys:
+Command Deck is a portrait-first Windows control surface for the stream. It is
+designed to run fullscreen on a rotated monitor and currently contains:
 
-- **Whiskey Sip** — enters `Whiskey Sip` for 2 seconds
-- **Croak Twice** — enters `Croaking`, plays the synchronized MP3, and returns
-  after 3 seconds
-- **Fly Catch** — enters `Fly Catch` for 1.4 seconds
+- a 16:9 Twitch stream monitor;
+- a native real-time chat surface;
+- stacked Whiskey Sip, Croak Twice, and Fly Catch controls for Berry;
+- F13, F14, and F15 triple-press global hotkeys;
+- automatic PNGTuber Remix launch, state control, state restoration, and Croak
+  audio playback.
 
-Each action remembers the active normal PNGTuber Remix state and restores it
-when the animation finishes. Command Deck does not launch PowerShell.
+The visible application is React and TypeScript inside a secure Electron shell.
+A bundled Python sidecar owns TwitchIO, PNGTuber Remix, audio, and Windows
+hotkeys. Electron and Python communicate over an authenticated WebSocket bound
+only to `127.0.0.1`.
 
-The temporary global controls require three quick presses within 1.2 seconds:
+## Current state
 
-- `F13` ×3 — Whiskey Sip
-- `F14` ×3 — Croak Twice
-- `F15` ×3 — Fly Catch
+The desktop UI, Twitch player, Berry controls, backend protocol, Windows
+packaging, and GitHub Actions pipeline are implemented. TwitchIO is packaged and
+its lifecycle boundary is in place; authorization and the live EventSub chat
+subscription are the next feature slice. Until that is connected, the packaged
+chat panel remains in its waiting state. Running the renderer without Electron
+uses demonstration chat data for interface development.
 
-They work while another Windows app has focus. Set
-`global_hotkeys.enabled` to `false` in `config.json` to disable them.
+## Configure
 
-## Start it
+Edit `config.json` before starting a development build. At minimum, set
+`twitch.channel` to the Twitch channel name to enable the stream monitor.
 
-1. Open **Command Deck** from the Windows Start menu, or double-click
-   `CommandDeck.exe` / `Start Command Deck.cmd`.
-2. Command Deck automatically opens `Berry/Berry.pngRemix`, waits up to 30
-   seconds for Remix, forces **Preview** mode with a **transparent**
-   background, and changes its top-right status to `ONLINE`.
-3. Click an action card, or quickly press its assigned hotkey three times.
+Do not commit Twitch tokens or client secrets. The empty Twitch authorization
+fields are placeholders for the upcoming device-code login flow.
 
-If Remix was not ready when Command Deck opened, click the red `OFFLINE` status
-in the top-right corner to retry. Its local WebSocket server must be configured
-to start automatically on port `9321`.
+The Remix executable path currently points to:
 
-Set `auto_launch_remix` to `false` in `config.json` if you ever want to disable
-the automatic model launch.
+```text
+C:/Users/Daniel/Downloads/PNGTuber-Remix-win32-x86_64/PNGTuber-Remix.exe
+```
 
-The startup guarantees can be controlled independently with
-`force_remix_preview` and `force_transparent_background` in `config.json`.
-Preview selection is sent directly to the Remix window after its WebSocket
-server reports ready; it does not move the mouse or require keyboard shortcuts.
-When that setup is complete, Windows focus is returned to Command Deck.
+Update `remix.executablePath` if Remix moves.
 
-Command Deck currently launches:
+## Develop
 
-`C:/Users/Daniel/Downloads/PNGTuber-Remix-win32-x86_64/PNGTuber-Remix.exe`
+For the normal local workflow, double-click `Start Command Deck.cmd`. It installs
+missing dependencies, builds the current source, and launches Command Deck.
+The app starts maximized on the selected portrait monitor as a normal Windows
+window with minimize, maximize, and close buttons.
 
-If Remix is moved or updated into another folder, change
-`remix_executable_path` in `config.json`.
+For manual development, requirements are Node.js and Python 3.12 or newer:
 
-## Required Remix state names
+```powershell
+npm.cmd ci
+python -m pip install -e "backend[dev,twitch]" pyinstaller
+npm.cmd run dev
+```
 
-The Remix model must contain these exact state names:
+Set `COMMAND_DECK_START_MAXIMIZED=0` before launching to start at its normal
+window size instead of maximized.
 
-- `Whiskey Sip`
-- `Croaking`
-- `Fly Catch`
+## Verify
 
-The old PowerShell helpers do not need to be open. Leaving them closed avoids
-duplicate triggers and competing WebSocket connections.
+```powershell
+npm.cmd run lint
+npm.cmd run typecheck
+npm.cmd test
+python -m pytest backend/tests
+python -m ruff check backend
+npm.cmd run make
+```
 
-## Configuration
+`npm.cmd run make` builds the React application, freezes the Python sidecar,
+stages the Berry model/audio, and creates both a Windows installer and a portable
+ZIP under `out/make`.
 
-Edit `config.json` to change the WebSocket address, action duration, state name,
-label, description, accent color, audio path, global-hotkey mappings and timing,
-or Remix executable. Relative paths are resolved from the `CommandDeck` folder.
+## CI/CD
 
-The application uses only Python's standard library:
+`.github/workflows/command-deck.yml` runs the TypeScript and Python checks in
+parallel. Windows packaging only runs after both jobs pass. Main-branch builds
+are uploaded as workflow artifacts, and tags matching `command-deck-v*` create a
+GitHub Release.
 
-- Tkinter for the desktop GUI
-- a local RFC 6455 WebSocket client for Remix
-- the Windows Media Control Interface for MP3 playback
-- native Windows global-hotkey registration through `ctypes`
-
-That deliberately small foundation leaves room for later modules such as
-TwitchIO without making the dashboard dependent on a browser or Electron.
-
-## Windows build
-
-`CommandDeck.exe` is a windowed one-file build with Berry embedded as its
-multi-resolution Windows icon. Run `py -3.13 build_windows.py` after source
-changes to rebuild it. Pillow and PyInstaller are build-time dependencies only.
+The former Tkinter implementation is retained unchanged in `_old` as a backup
+and behavioral reference.

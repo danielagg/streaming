@@ -1,49 +1,61 @@
 {
-  "app_name": "Command Deck",
-  "websocket_url": "ws://127.0.0.1:9321",
-  "auto_launch_remix": true,
-  "force_remix_preview": true,
-  "force_transparent_background": true,
-  "global_hotkeys": {
-    "enabled": true,
-    "presses_required": 3,
-    "press_window_ms": 1200,
-    "bindings": {
-      "F13": "whiskey",
-      "F14": "croak",
-      "F15": "fly"
-    }
+  "appName": "Command Deck",
+  "twitch": {
+    "channel": "",
+    "playerParent": "localhost",
+    "enabled": false,
+    "clientId": "",
+    "broadcasterId": "",
+    "tokenPath": ""
   },
-  "remix_executable_path": "C:/Users/Daniel/Downloads/PNGTuber-Remix-win32-x86_64/PNGTuber-Remix.exe",
-  "remix_model_path": "../Berry/Berry.pngRemix",
+  "backend": {
+    "host": "127.0.0.1",
+    "port": 8765
+  },
+  "remix": {
+    "websocketUrl": "ws://127.0.0.1:9321",
+    "autoLaunch": true,
+    "forcePreview": true,
+    "forceTransparentBackground": true,
+    "executablePath": "C:/Users/Daniel/Downloads/PNGTuber-Remix-win32-x86_64/PNGTuber-Remix.exe",
+    "modelPath": "../Berry/Berry.pngRemix"
+  },
   "actions": [
     {
       "id": "whiskey",
       "number": "01",
       "name": "Whiskey Sip",
-      "state_name": "Whiskey Sip",
+      "stateName": "Whiskey Sip",
       "description": "A measured two-second toast.",
-      "duration_ms": 2000,
-      "accent": "#D5A653"
+      "durationMs": 2000,
+      "hotkey": "F13",
+      "accent": "#d5a653"
     },
     {
       "id": "croak",
       "number": "02",
       "name": "Croak Twice",
-      "state_name": "Croaking",
+      "stateName": "Croaking",
       "description": "Two synchronized calls with audio.",
-      "duration_ms": 3000,
-      "accent": "#8EBB74",
-      "audio_path": "../Berry/PNGTuber_Remix_Rig/Croaking/Croak Twice.mp3"
+      "durationMs": 3000,
+      "hotkey": "F14",
+      "accent": "#8ebb74",
+      "audioPath": "../Berry/PNGTuber_Remix_Rig/Croaking/Croak Twice.mp3"
     },
     {
       "id": "fly",
       "number": "03",
       "name": "Fly Catch",
-      "state_name": "Fly Catch",
+      "stateName": "Fly Catch",
       "description": "Fast tongue strike and recovery.",
-      "duration_ms": 1400,
-      "accent": "#D96D91"
+      "durationMs": 1400,
+      "hotkey": "F15",
+      "accent": "#d96d91"
     }
-  ]
+  ],
+  "globalHotkeys": {
+    "enabled": true,
+    "pressesRequired": 3,
+    "pressWindowMs": 1200
+  }
 }

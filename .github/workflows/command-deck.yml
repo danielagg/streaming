@@ -1,0 +1,94 @@
+name: Command Deck
+
+on:
+  pull_request:
+    paths:
+      - "CommandDeck/**"
+      - ".github/workflows/command-deck.yml"
+  push:
+    branches: [main]
+    tags: ["command-deck-v*"]
+    paths:
+      - "CommandDeck/**"
+      - ".github/workflows/command-deck.yml"
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: CommandDeck
+
+jobs:
+  typescript:
+    name: TypeScript checks
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: CommandDeck/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  python:
+    name: Python checks
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: CommandDeck/backend/pyproject.toml
+      - run: python -m pip install -e "backend[dev,twitch]"
+      - run: python -m ruff check backend
+      - run: python -m pytest backend/tests
+
+  package:
+    name: Windows package
+    if: github.event_name == 'push'
+    needs: [typescript, python]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: CommandDeck/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: CommandDeck/backend/pyproject.toml
+      - run: npm ci
+      - run: python -m pip install -e "backend[twitch]" pyinstaller
+      - run: npm run make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: command-deck-windows-${{ github.sha }}
+          path: CommandDeck/out/make/**
+          if-no-files-found: error
+
+  release:
+    name: GitHub release
+    if: startsWith(github.ref, 'refs/tags/command-deck-v')
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: command-deck-windows-*
+          merge-multiple: true
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: artifacts/**
