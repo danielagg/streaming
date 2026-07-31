@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import os
 from typing import Any
 
 from aiohttp import WSMsgType, web
@@ -13,6 +14,7 @@ from .remix import MockRemixClient, RemixClient
 from .remix_window import select_preview_mode
 from .startup import launch_remix, read_float32
 from .twitch import TwitchChatService
+from .window_focus import focus_process_window
 
 PROTOCOL_VERSION = 1
 
@@ -37,6 +39,10 @@ class CommandDeckService:
         self.hotkeys: GlobalHotkeyListener | None = None
         self.tasks: set[asyncio.Task[Any]] = set()
         self.remix_process_id: int | None = None
+        electron_process_id = os.environ.get("COMMAND_DECK_ELECTRON_PID")
+        self.electron_process_id = (
+            int(electron_process_id) if electron_process_id else None
+        )
 
     async def emit(
         self, event_type: str, payload: dict[str, Any], request_id: str | None = None
@@ -269,6 +275,13 @@ class CommandDeckService:
             ui_scale=ui_scale,
         )
         self.remix_process_id = None
+        if self.electron_process_id is not None:
+            with contextlib.suppress(RuntimeError):
+                await asyncio.to_thread(
+                    focus_process_window,
+                    self.electron_process_id,
+                    title="Command Deck",
+                )
         await self.emit("remix.preview.ready", {}, None)
 
     async def close(self) -> None:

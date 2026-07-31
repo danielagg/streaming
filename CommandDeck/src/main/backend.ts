@@ -39,6 +39,7 @@ export class BackendClient extends EventEmitter {
         COMMAND_DECK_HOST: "127.0.0.1",
         COMMAND_DECK_PORT: String(BACKEND_PORT),
         COMMAND_DECK_TOKEN: this.token,
+        COMMAND_DECK_ELECTRON_PID: String(process.pid),
       },
       stdio: ["pipe", "pipe", "pipe"],
     });

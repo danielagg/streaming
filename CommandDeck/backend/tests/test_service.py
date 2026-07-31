@@ -45,6 +45,7 @@ async def test_invalid_command_is_rejected():
 
 @pytest.mark.asyncio
 async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path):
+    monkeypatch.setenv("COMMAND_DECK_ELECTRON_PID", "314")
     executable = tmp_path / "PNGTuber-Remix.exe"
     config = replace(
         default_config(),
@@ -55,6 +56,7 @@ async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path)
     service = CommandDeckService(config, mock_remix=True)
     service.remix_process_id = 42
     selected: list[tuple[int, float]] = []
+    focused: list[tuple[int, str | None]] = []
     events: list[str] = []
 
     async def capture(event_type, _payload, _request_id=None):
@@ -67,9 +69,14 @@ async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path)
         "command_deck.service.select_preview_mode",
         lambda process_id, *, ui_scale: selected.append((process_id, ui_scale)),
     )
+    monkeypatch.setattr(
+        "command_deck.service.focus_process_window",
+        lambda process_id, *, title: focused.append((process_id, title)),
+    )
 
     await service._probe_remix()
 
     assert selected == [(42, 1.5)]
+    assert focused == [(314, "Command Deck")]
     assert service.remix_process_id is None
     assert "remix.preview.ready" in events
