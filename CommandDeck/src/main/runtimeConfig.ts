@@ -10,14 +10,12 @@ import type {
 
 interface RawConfig {
   twitch?: { channel?: string; playerParent?: string };
-  globalHotkeys?: { pressesRequired?: number };
   actions?: Array<{
     id?: string;
     number?: string;
     name?: string;
     description?: string;
     durationMs?: number;
-    hotkey?: string;
     accent?: string;
   }>;
 }
@@ -39,7 +37,6 @@ export function loadRendererConfig(): RendererConfig {
   const raw = JSON.parse(
     fs.readFileSync(runtimeConfigPath(), "utf8"),
   ) as RawConfig;
-  const presses = raw.globalHotkeys?.pressesRequired ?? 3;
   const actions = (raw.actions ?? []).map((action): BerryActionDefinition => {
     if (!ACTION_IDS.has(action.id as BerryActionId)) {
       throw new Error(`Invalid Berry action id: ${action.id ?? "missing"}`);
@@ -50,7 +47,6 @@ export function loadRendererConfig(): RendererConfig {
       name: action.name ?? action.id!,
       description: action.description ?? "",
       durationMs: action.durationMs ?? 0,
-      hotkey: action.hotkey ? `${action.hotkey} ×${presses}` : "",
       accent: action.accent ?? "#83e8ee",
     };
   });

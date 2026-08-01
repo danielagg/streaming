@@ -2,13 +2,18 @@ import struct
 
 import pytest
 
-from command_deck.remix_window import _scaled_point
+from command_deck.remix_window import _centered_origin, _scaled_point
 from command_deck.startup import GODOT_FLOAT_VARIANT, _signature, read_float32
 
 
 def test_preview_click_coordinates_follow_ui_scale():
     assert _scaled_point((61, 16), 1.5) == (92, 24)
     assert _scaled_point((88, 74), 1.5) == (132, 111)
+
+
+def test_window_is_centered_inside_target_display():
+    assert _centered_origin((800, 600), (1920, 0, 1080, 1920)) == (2060, 660)
+    assert _centered_origin((1200, 2000), (-1080, 0, 1080, 1920)) == (-1080, 0)
 
 
 def test_read_float32_reads_remix_ui_scale(tmp_path):

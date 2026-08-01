@@ -11,14 +11,16 @@ export function chooseDisplay(displays: Display[], primary: Display): Display {
   const remembered = displays.find(
     (display) => String(display.id) === settings.displayId,
   );
-  if (remembered) return remembered;
-
   const secondary = displays.filter((display) => display.id !== primary.id);
+  const portrait = secondary.filter(
+    (display) => display.workArea.height > display.workArea.width,
+  );
   return (
-    secondary.find(
-      (display) => display.workArea.height > display.workArea.width,
-    ) ??
+    portrait.find((display) => display.id === remembered?.id) ??
+    portrait[0] ??
+    secondary.find((display) => display.id === remembered?.id) ??
     secondary[0] ??
+    remembered ??
     primary
   );
 }

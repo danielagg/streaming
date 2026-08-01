@@ -4,33 +4,30 @@ Command Deck is a portrait-first Windows control surface for the stream. It is
 designed to run fullscreen on a rotated monitor and currently contains:
 
 - a 16:9 Twitch stream monitor;
-- a native real-time chat surface;
-- stacked Whiskey Sip, Croak Twice, and Fly Catch controls for Berry;
-- F13, F14, and F15 triple-press global hotkeys;
+- Twitch's live embedded chat surface;
+- compact Whiskey Sip, Croak Twice, and Fly Catch controls for Berry;
 - automatic PNGTuber Remix launch, state control, state restoration, and Croak
   audio playback.
 
 The visible application is React and TypeScript inside a secure Electron shell.
-A bundled Python sidecar owns TwitchIO, PNGTuber Remix, audio, and Windows
-hotkeys. Electron and Python communicate over an authenticated WebSocket bound
+A bundled Python sidecar owns TwitchIO, PNGTuber Remix, and audio. Electron and
+Python communicate over an authenticated WebSocket bound
 only to `127.0.0.1`.
 
 ## Current state
 
-The desktop UI, Twitch player, Berry controls, backend protocol, Windows
-packaging, and GitHub Actions pipeline are implemented. TwitchIO is packaged and
-its lifecycle boundary is in place; authorization and the live EventSub chat
-subscription are the next feature slice. Until that is connected, the packaged
-chat panel remains in its waiting state. Running the renderer without Electron
-uses demonstration chat data for interface development.
+The desktop UI, Twitch player and live chat, Berry controls, backend protocol,
+Windows packaging, and GitHub Actions pipeline are implemented. The chat panel
+uses Twitch's supported embed so live messages work without storing Twitch
+credentials in Command Deck.
 
 ## Configure
 
 Edit `config.json` before starting a development build. At minimum, set
 `twitch.channel` to the Twitch channel name to enable the stream monitor.
 
-Do not commit Twitch tokens or client secrets. The empty Twitch authorization
-fields are placeholders for the upcoming device-code login flow.
+Do not commit Twitch tokens or client secrets. The Twitch chat embed does not
+need either one.
 
 The Remix executable path currently points to:
 

@@ -25,9 +25,9 @@ const FALLBACK_CONFIG: RendererConfig = {
   twitchChannel: 'monstercat',
   twitchPlayerParent: 'localhost',
   actions: [
-    { id: 'whiskey', number: '01', name: 'Whiskey', description: 'Bring out Berry’s favorite drink', durationMs: 4_000, hotkey: 'F13 ×3', accent: '#f0c872' },
-    { id: 'croak', number: '02', name: 'Croak', description: 'Play the croak animation and audio', durationMs: 4_000, hotkey: 'F14 ×3', accent: '#9be088' },
-    { id: 'fly', number: '03', name: 'Fly', description: 'Send Berry after a passing snack', durationMs: 4_000, hotkey: 'F15 ×3', accent: '#b8a3ed' },
+    { id: 'whiskey', number: '01', name: 'Whiskey', description: 'Bring out Berry’s favorite drink', durationMs: 4_000, accent: '#f0c872' },
+    { id: 'croak', number: '02', name: 'Croak', description: 'Play the croak animation and audio', durationMs: 4_000, accent: '#9be088' },
+    { id: 'fly', number: '03', name: 'Fly', description: 'Send Berry after a passing snack', durationMs: 4_000, accent: '#b8a3ed' },
   ],
 };
 

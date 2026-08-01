@@ -5,6 +5,7 @@ import {
   ipcMain,
   screen,
   shell,
+  type Display,
   type IpcMainInvokeEvent,
 } from "electron";
 
@@ -24,7 +25,7 @@ const rendererConfig: RendererConfig = loadRendererConfig();
 let mainWindow: BrowserWindow | undefined;
 let rendererServer: RendererServer | undefined;
 
-function createWindow(rendererUrl: string): void {
+function createWindow(rendererUrl: string): Display {
   const displays = screen.getAllDisplays();
   const display = chooseDisplay(displays, screen.getPrimaryDisplay());
 
@@ -49,12 +50,16 @@ function createWindow(rendererUrl: string): void {
     },
   });
 
-  if (process.env.COMMAND_DECK_START_MAXIMIZED !== "0") {
-    mainWindow.maximize();
-  }
-
   rememberDisplay(display);
-  mainWindow.once("ready-to-show", () => mainWindow?.show());
+  mainWindow.once("ready-to-show", () => {
+    const window = mainWindow;
+    if (!window) return;
+    window.show();
+    if (process.env.COMMAND_DECK_START_MAXIMIZED !== "0") {
+      window.maximize();
+    }
+    window.focus();
+  });
   mainWindow.on("closed", () => {
     mainWindow = undefined;
   });
@@ -73,6 +78,7 @@ function createWindow(rendererUrl: string): void {
     }
   });
   void mainWindow.loadURL(rendererUrl);
+  return display;
 }
 
 function registerIpc(): void {
@@ -119,8 +125,8 @@ void app.whenReady().then(async () => {
   registerIpc();
   const devServer = process.env.VITE_DEV_SERVER_URL;
   if (!devServer) rendererServer = await startRendererServer();
-  createWindow(devServer ?? rendererServer!.url);
-  backend.start();
+  const display = createWindow(devServer ?? rendererServer!.url);
+  backend.start(display.workArea);
 });
 
 app.on("activate", () => {

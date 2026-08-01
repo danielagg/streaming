@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { deckBridge, type RendererConfig } from "./bridge";
 import type {
   BerryAction,
   BerryActionState,
-  ChatMessage,
   ConnectionState,
   DeckStatus,
 } from "./types";
@@ -11,34 +10,22 @@ import type {
 const ACTIONS: Array<{
   action: BerryAction;
   label: string;
-  description: string;
-  glyph: string;
-  key: string;
-  accent: string;
+  icon: string;
 }> = [
   {
     action: "whiskey",
-    label: "Whiskey",
-    description: "Bring out Berry’s favorite drink",
-    glyph: "W",
-    key: "F13 ×3",
-    accent: "#f0c872",
+    label: "Whiskey Sip",
+    icon: "🥃",
   },
   {
     action: "croak",
-    label: "Croak",
-    description: "Play the croak animation and audio",
-    glyph: "C",
-    key: "F14 ×3",
-    accent: "#9be088",
+    label: "Croak Twice",
+    icon: "🎵",
   },
   {
     action: "fly",
-    label: "Fly",
-    description: "Send Berry after a passing snack",
-    glyph: "F",
-    key: "F15 ×3",
-    accent: "#b8a3ed",
+    label: "Fly Catch",
+    icon: "🪰",
   },
 ];
 
@@ -54,20 +41,13 @@ function StatusDot({ state }: { state: ConnectionState }) {
   );
 }
 
-function timeLabel(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(timestamp);
-}
-
 function StreamMonitor({ config }: { config: RendererConfig | null }) {
   const [loaded, setLoaded] = useState(false);
   const src = useMemo(() => {
     if (!config?.twitchChannel.trim()) return "";
     const query = new URLSearchParams({
       channel: config.twitchChannel,
-      parent: config.twitchPlayerParent,
+      parent: window.location.hostname || config.twitchPlayerParent,
       muted: "true",
       autoplay: "true",
     });
@@ -111,101 +91,75 @@ function StreamMonitor({ config }: { config: RendererConfig | null }) {
   );
 }
 
-function ChatPanel({
-  messages,
-  state,
-}: {
-  messages: ChatMessage[];
-  state: ConnectionState;
-}) {
-  const viewportRef = useRef<HTMLDivElement>(null);
-  const [following, setFollowing] = useState(true);
-  const previousCount = useRef(messages.length);
+function ChatPanel({ config }: { config: RendererConfig | null }) {
+  const [loaded, setLoaded] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const src = useMemo(() => {
+    const channel = config?.twitchChannel.trim();
+    if (!channel) return "";
+    const query = new URLSearchParams({
+      parent:
+        window.location.hostname || config?.twitchPlayerParent || "localhost",
+    });
+    return `https://www.twitch.tv/embed/${encodeURIComponent(channel)}/chat?${query.toString()}&darkpopout`;
+  }, [config]);
+  const chatExpanded = expanded && Boolean(src);
 
+  useEffect(() => setLoaded(false), [src]);
   useEffect(() => {
-    if (following && messages.length !== previousCount.current) {
-      viewportRef.current?.scrollTo({
-        top: viewportRef.current.scrollHeight,
-        behavior: previousCount.current ? "smooth" : "auto",
-      });
-    }
-    previousCount.current = messages.length;
-  }, [following, messages.length]);
-
-  const onScroll = () => {
-    const element = viewportRef.current;
-    if (!element) return;
-    setFollowing(
-      element.scrollHeight - element.scrollTop - element.clientHeight < 64,
-    );
-  };
+    if (!chatExpanded) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setExpanded(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [chatExpanded]);
 
   return (
-    <section className="panel chat-panel" aria-label="Twitch chat">
+    <section
+      className={`panel chat-panel${chatExpanded ? " chat-panel--expanded" : ""}`}
+      aria-label="Twitch chat"
+    >
       <div className="panel-heading chat-heading">
-        <div>
-          <span className="eyebrow">Community</span>
-          <h2>Chat</h2>
+        <div className="chat-heading-actions">
+          {src && (
+            <button
+              className="chat-expand-button"
+              type="button"
+              aria-expanded={chatExpanded}
+              onClick={() => setExpanded(!chatExpanded)}
+            >
+              {chatExpanded ? "Return to deck" : "Expand"}
+            </button>
+          )}
         </div>
-        <span className={`connection-label connection-label--${state}`}>
-          <StatusDot state={state} />
-          {state}
-        </span>
       </div>
-      <div className="chat-viewport" ref={viewportRef} onScroll={onScroll}>
-        {messages.length === 0 && (
-          <div className="chat-empty">
-            <span>◌</span>
-            <strong>Waiting for chat</strong>
-            <small>New messages will appear here.</small>
+      <div className="chat-frame">
+        {!config && (
+          <div className="chat-loading">
+            <span className="spinner" /> Loading chat configuration
           </div>
         )}
-        {messages.map((message) => (
-          <article
-            className={`chat-message${message.highlight ? " chat-message--highlight" : ""}`}
-            key={message.id}
-          >
-            <div
-              className="avatar"
-              style={
-                {
-                  "--avatar-color": message.author.color ?? "#8ee7ff",
-                } as React.CSSProperties
-              }
-            >
-              {message.author.displayName.slice(0, 1).toUpperCase()}
-            </div>
-            <div className="message-body">
-              <div className="message-meta">
-                <strong style={{ color: message.author.color ?? "#dfe8f1" }}>
-                  {message.author.displayName}
-                </strong>
-                {message.author.badges?.map((badge) => (
-                  <span className="badge" key={badge}>
-                    {badge}
-                  </span>
-                ))}
-                <time>{timeLabel(message.timestamp)}</time>
-              </div>
-              <p>{message.text}</p>
-            </div>
-          </article>
-        ))}
+        {config && !config.twitchChannel.trim() && (
+          <div className="chat-unconfigured">
+            <strong>Twitch channel not configured</strong>
+            <small>Add a channel in Command Deck settings.</small>
+          </div>
+        )}
+        {src && !loaded && (
+          <div className="chat-loading">
+            <span className="spinner" /> Connecting to chat
+          </div>
+        )}
+        {src && (
+          <iframe
+            src={src}
+            title={`${config?.twitchChannel ?? ""} Twitch chat`}
+            onLoad={() => setLoaded(true)}
+          />
+        )}
       </div>
-      {!following && (
-        <button
-          className="new-message-button"
-          onClick={() => {
-            setFollowing(true);
-            viewportRef.current?.scrollTo({
-              top: viewportRef.current.scrollHeight,
-              behavior: "smooth",
-            });
-          }}
-        >
-          ↓ Jump to latest
-        </button>
-      )}
     </section>
   );
 }
@@ -215,7 +169,7 @@ function PlaceholderPanel({
   area,
 }: {
   title: string;
-  area: "quick" | "alerts" | "sound" | "todo";
+  area: "alerts" | "sound" | "todo";
 }) {
   return (
     <section
@@ -243,34 +197,15 @@ function ActionRow({
   return (
     <button
       className={`action-row action-row--${definition.action}${active ? " is-running" : ""}`}
-      style={{ "--action-color": definition.accent } as React.CSSProperties}
       disabled={disabled || active}
       onClick={onTrigger}
+      aria-label={definition.label}
+      aria-pressed={active}
+      title={definition.label}
     >
-      <span className="action-glyph">
-        {definition.glyph}
-        <span />
+      <span className="action-lens" aria-hidden="true">
+        <span className="action-icon">{definition.icon}</span>
       </span>
-      <span className="action-copy">
-        <span className="action-title">{definition.label}</span>
-        <span className="action-description">
-          {active
-            ? (state.detail ?? "Animation running…")
-            : definition.description}
-        </span>
-      </span>
-      <span className="action-tail">
-        <kbd>{definition.key}</kbd>
-        <span className="action-arrow">
-          {active ? <span className="spinner" /> : "→"}
-        </span>
-      </span>
-      {active && (
-        <span
-          className="action-progress"
-          style={{ width: `${Math.max(6, state.progress ?? 34)}%` }}
-        />
-      )}
     </button>
   );
 }
@@ -282,9 +217,7 @@ export function App() {
     twitch: "connecting",
     remix: "connecting",
   });
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [actions, setActions] = useState(EMPTY_ACTIONS);
-  const [clock, setClock] = useState(new Date());
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -295,21 +228,15 @@ export function App() {
       })
       .catch(() => setError("Could not load Command Deck configuration."));
 
-    const unsubscribeChat = deckBridge.subscribeChat((message) => {
-      setMessages((current) => [...current, message].slice(-200));
-    });
     const unsubscribeStatus = deckBridge.subscribeStatus((update) =>
       setStatus((current) => ({ ...current, ...update })),
     );
     const unsubscribeActions = deckBridge.subscribeActions((event) =>
       setActions((current) => ({ ...current, [event.action]: event })),
     );
-    const timer = window.setInterval(() => setClock(new Date()), 1_000);
     return () => {
-      unsubscribeChat();
       unsubscribeStatus();
       unsubscribeActions();
-      window.clearInterval(timer);
     };
   }, []);
 
@@ -332,28 +259,6 @@ export function App() {
 
   return (
     <main className="deck-shell">
-      <header className="deck-header">
-        <span className="deck-name">Command Deck</span>
-        <div className="header-status">
-          <span>
-            <StatusDot state={status.backend} />
-            SYSTEM{" "}
-            {status.backend === "connected"
-              ? "READY"
-              : status.backend.toUpperCase()}
-          </span>
-          {deckBridge.mode === "demo" && (
-            <span className="demo-chip">DEMO</span>
-          )}
-          <time>
-            {clock.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </time>
-        </div>
-      </header>
-
       <div className="command-grid">
         <StreamMonitor config={config} />
         <PlaceholderPanel title="Alert pane" area="alerts" />
@@ -381,10 +286,9 @@ export function App() {
                 id: action.action,
                 number: "",
                 name: action.label,
-                description: action.description,
+                description: "",
                 durationMs: 0,
-                hotkey: action.key,
-                accent: action.accent,
+                accent: "",
               }))
             ).map((configured) => {
               const fallback = ACTIONS.find(
@@ -393,10 +297,7 @@ export function App() {
               const definition = {
                 action: configured.id,
                 label: configured.name,
-                description: configured.description,
-                glyph: fallback.glyph,
-                key: configured.hotkey,
-                accent: configured.accent || fallback.accent,
+                icon: fallback.icon,
               };
               return (
                 <ActionRow
@@ -411,7 +312,7 @@ export function App() {
           </div>
         </section>
 
-        <ChatPanel messages={messages} state={status.twitch} />
+        <ChatPanel config={config} />
         <PlaceholderPanel title="Sound + sound effects" area="sound" />
         <PlaceholderPanel title="Todo" area="todo" />
       </div>

@@ -9,7 +9,6 @@ from aiohttp import WSMsgType, web
 
 from .config import AppConfig
 from .controller import ActionController
-from .hotkeys import GlobalHotkeyListener
 from .remix import MockRemixClient, RemixClient
 from .remix_window import select_preview_mode
 from .startup import launch_remix, read_float32
@@ -17,6 +16,23 @@ from .twitch import TwitchChatService
 from .window_focus import focus_process_window
 
 PROTOCOL_VERSION = 1
+
+
+def _target_display_bounds() -> tuple[int, int, int, int] | None:
+    names = (
+        "COMMAND_DECK_DISPLAY_X",
+        "COMMAND_DECK_DISPLAY_Y",
+        "COMMAND_DECK_DISPLAY_WIDTH",
+        "COMMAND_DECK_DISPLAY_HEIGHT",
+    )
+    values = [os.environ.get(name) for name in names]
+    if any(value is None for value in values):
+        return None
+    try:
+        x, y, width, height = (int(value) for value in values if value is not None)
+    except ValueError:
+        return None
+    return (x, y, width, height) if width > 0 and height > 0 else None
 
 
 class CommandDeckService:
@@ -28,7 +44,6 @@ class CommandDeckService:
         self.mock_remix = mock_remix
         self.clients: set[web.WebSocketResponse] = set()
         self.shutdown_event = asyncio.Event()
-        self.loop: asyncio.AbstractEventLoop | None = None
         self.remix = (
             MockRemixClient([action.state_name for action in config.actions])
             if mock_remix
@@ -36,9 +51,9 @@ class CommandDeckService:
         )
         self.controller = ActionController(config.actions, self.remix, self.emit)
         self.twitch = TwitchChatService(config.twitch, self.emit)
-        self.hotkeys: GlobalHotkeyListener | None = None
         self.tasks: set[asyncio.Task[Any]] = set()
         self.remix_process_id: int | None = None
+        self.target_display_bounds = _target_display_bounds()
         electron_process_id = os.environ.get("COMMAND_DECK_ELECTRON_PID")
         self.electron_process_id = (
             int(electron_process_id) if electron_process_id else None
@@ -185,7 +200,6 @@ class CommandDeckService:
             raise ValueError(f"Unknown command type: {command_type}")
 
     async def start(self) -> None:
-        self.loop = asyncio.get_running_loop()
         if not self.mock_remix:
             try:
                 process = launch_remix(self.config)
@@ -210,24 +224,6 @@ class CommandDeckService:
         self.tasks.add(remix_probe)
         remix_probe.add_done_callback(self.tasks.discard)
         await self.twitch.start()
-        hotkeys = self.config.global_hotkeys
-        if hotkeys and hotkeys.enabled:
-
-            def callback(key: str, action_id: str, count: int, triggered: bool) -> None:
-                if self.loop and triggered:
-                    self.loop.call_soon_threadsafe(
-                        lambda: self.tasks.add(
-                            asyncio.create_task(self.controller.trigger(action_id))
-                        )
-                    )
-
-            self.hotkeys = GlobalHotkeyListener(
-                hotkeys.bindings,
-                callback,
-                hotkeys.presses_required,
-                hotkeys.press_window_ms,
-            )
-            self.hotkeys.start()
 
     async def _probe_remix(self) -> None:
         attempts = 1 if self.mock_remix else 30
@@ -273,6 +269,7 @@ class CommandDeckService:
             select_preview_mode,
             self.remix_process_id,
             ui_scale=ui_scale,
+            target_bounds=self.target_display_bounds,
         )
         self.remix_process_id = None
         if self.electron_process_id is not None:
@@ -285,8 +282,6 @@ class CommandDeckService:
         await self.emit("remix.preview.ready", {}, None)
 
     async def close(self) -> None:
-        if self.hotkeys:
-            self.hotkeys.stop()
         for task in self.tasks:
             task.cancel()
         for task in self.tasks:

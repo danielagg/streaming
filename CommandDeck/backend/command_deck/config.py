@@ -19,14 +19,6 @@ class ActionDefinition:
 
 
 @dataclass(frozen=True, slots=True)
-class HotkeyConfig:
-    enabled: bool = True
-    presses_required: int = 3
-    press_window_ms: int = 1200
-    bindings: dict[str, str] = field(default_factory=dict)
-
-
-@dataclass(frozen=True, slots=True)
 class TwitchConfig:
     enabled: bool = False
     client_id: str | None = None
@@ -44,7 +36,6 @@ class AppConfig:
     force_transparent_background: bool = False
     remix_executable_path: Path | None = None
     remix_model_path: Path | None = None
-    global_hotkeys: HotkeyConfig | None = None
     twitch: TwitchConfig = field(default_factory=TwitchConfig)
 
 
@@ -81,9 +72,6 @@ def default_config() -> AppConfig:
                 "#D96D91",
             ),
         ),
-        global_hotkeys=HotkeyConfig(
-            bindings={"F13": "whiskey", "F14": "croak", "F15": "fly"}
-        ),
     )
 
 
@@ -113,34 +101,6 @@ def load_config(path: Path | None) -> AppConfig:
         raise ValueError("Command Deck needs at least one configured action.")
     if len({action.id for action in actions}) != len(actions):
         raise ValueError("Action ids must be unique.")
-    hot_raw = raw.get("global_hotkeys", raw.get("globalHotkeys"))
-    hotkeys = None
-    if hot_raw is not None:
-        hotkeys = HotkeyConfig(
-            enabled=bool(hot_raw.get("enabled", True)),
-            presses_required=int(
-                hot_raw.get("presses_required", hot_raw.get("pressesRequired", 3))
-            ),
-            press_window_ms=int(
-                hot_raw.get("press_window_ms", hot_raw.get("pressWindowMs", 1200))
-            ),
-            bindings={
-                str(key).upper(): str(value)
-                for key, value in hot_raw.get("bindings", {}).items()
-            }
-            or {
-                str(item["hotkey"]).upper(): str(item["id"])
-                for item in raw.get("actions", [])
-                if item.get("hotkey")
-            },
-        )
-        if hotkeys.presses_required < 1 or hotkeys.press_window_ms < 1:
-            raise ValueError("Hotkey press count and window must be positive.")
-        valid_ids = {action.id for action in actions}
-        if set(hotkeys.bindings.values()) - valid_ids:
-            raise ValueError("A hotkey references an unknown action.")
-        if set(hotkeys.bindings) - {f"F{i}" for i in range(13, 25)}:
-            raise ValueError("Only F13 through F24 are supported global hotkeys.")
     twitch_raw = raw.get("twitch", {})
     twitch = TwitchConfig(
         enabled=bool(twitch_raw.get("enabled", False)),
@@ -183,6 +143,5 @@ def load_config(path: Path | None) -> AppConfig:
         remix_model_path=_path(
             base, raw.get("remix_model_path", remix_raw.get("modelPath"))
         ),
-        global_hotkeys=hotkeys,
         twitch=twitch,
     )

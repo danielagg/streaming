@@ -23,6 +23,7 @@ def select_preview_mode(
     *,
     ui_scale: float = 1.0,
     timeout_seconds: float = 5.0,
+    target_bounds: tuple[int, int, int, int] | None = None,
 ) -> None:
     if sys.platform != "win32":
         raise RemixWindowControlError(
@@ -38,6 +39,8 @@ def select_preview_mode(
         )
 
     window = _wait_for_main_window(process_id, timeout_seconds)
+    if target_bounds is not None:
+        _move_to_display(window, target_bounds)
     mode_x, mode_y = _scaled_point(MODE_BUTTON, ui_scale)
     preview_x, preview_y = _scaled_point(PREVIEW_MENU_ITEM, ui_scale)
 
@@ -49,6 +52,54 @@ def select_preview_mode(
 
 def _scaled_point(point: tuple[int, int], scale: float) -> tuple[int, int]:
     return round(point[0] * scale), round(point[1] * scale)
+
+
+def _centered_origin(
+    window_size: tuple[int, int],
+    display_bounds: tuple[int, int, int, int],
+) -> tuple[int, int]:
+    window_width, window_height = window_size
+    x, y, display_width, display_height = display_bounds
+    return (
+        x + max(0, (display_width - window_width) // 2),
+        y + max(0, (display_height - window_height) // 2),
+    )
+
+
+def _move_to_display(
+    window: int, display_bounds: tuple[int, int, int, int]
+) -> None:
+    user32 = ctypes.WinDLL("user32", use_last_error=True)
+    rectangle = wintypes.RECT()
+    user32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+    user32.GetWindowRect.restype = wintypes.BOOL
+    if not user32.GetWindowRect(window, ctypes.byref(rectangle)):
+        raise RemixWindowControlError("Could not measure the PNGTuber Remix window.")
+    origin = _centered_origin(
+        (rectangle.right - rectangle.left, rectangle.bottom - rectangle.top),
+        display_bounds,
+    )
+    user32.SetWindowPos.argtypes = [
+        wintypes.HWND,
+        wintypes.HWND,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        ctypes.c_int,
+        wintypes.UINT,
+    ]
+    user32.SetWindowPos.restype = wintypes.BOOL
+    no_size_or_focus = 0x0001 | 0x0004 | 0x0010
+    if not user32.SetWindowPos(
+        window,
+        0,
+        origin[0],
+        origin[1],
+        0,
+        0,
+        no_size_or_focus,
+    ):
+        raise RemixWindowControlError("Could not move PNGTuber Remix to the target display.")
 
 
 def _wait_for_main_window(process_id: int, timeout_seconds: float) -> int:

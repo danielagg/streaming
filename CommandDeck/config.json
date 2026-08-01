@@ -28,7 +28,6 @@
       "stateName": "Whiskey Sip",
       "description": "A measured two-second toast.",
       "durationMs": 2000,
-      "hotkey": "F13",
       "accent": "#d5a653"
     },
     {
@@ -38,7 +37,6 @@
       "stateName": "Croaking",
       "description": "Two synchronized calls with audio.",
       "durationMs": 3000,
-      "hotkey": "F14",
       "accent": "#8ebb74",
       "audioPath": "../Berry/PNGTuber_Remix_Rig/Croaking/Croak Twice.mp3"
     },
@@ -49,13 +47,7 @@
       "stateName": "Fly Catch",
       "description": "Fast tongue strike and recovery.",
       "durationMs": 1400,
-      "hotkey": "F15",
       "accent": "#d96d91"
     }
-  ],
-  "globalHotkeys": {
-    "enabled": true,
-    "pressesRequired": 3,
-    "pressWindowMs": 1200
-  }
+  ]
 }

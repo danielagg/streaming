@@ -39,7 +39,6 @@ export interface BerryActionDefinition {
   name: string;
   description: string;
   durationMs: number;
-  hotkey: string;
   accent: string;
 }
 

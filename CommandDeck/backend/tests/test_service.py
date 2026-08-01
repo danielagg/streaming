@@ -13,7 +13,6 @@ async def test_trigger_command_acknowledges_and_completes(monkeypatch):
         app_name=config.app_name,
         remix_websocket_url=config.remix_websocket_url,
         actions=(type(config.actions[0])("whiskey", "Whiskey", "Whiskey Sip", 0),),
-        global_hotkeys=None,
     )
     service = CommandDeckService(config, mock_remix=True)
     messages = []
@@ -46,16 +45,19 @@ async def test_invalid_command_is_rejected():
 @pytest.mark.asyncio
 async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path):
     monkeypatch.setenv("COMMAND_DECK_ELECTRON_PID", "314")
+    monkeypatch.setenv("COMMAND_DECK_DISPLAY_X", "1920")
+    monkeypatch.setenv("COMMAND_DECK_DISPLAY_Y", "0")
+    monkeypatch.setenv("COMMAND_DECK_DISPLAY_WIDTH", "1080")
+    monkeypatch.setenv("COMMAND_DECK_DISPLAY_HEIGHT", "1920")
     executable = tmp_path / "PNGTuber-Remix.exe"
     config = replace(
         default_config(),
         force_remix_preview=True,
         remix_executable_path=executable,
-        global_hotkeys=None,
     )
     service = CommandDeckService(config, mock_remix=True)
     service.remix_process_id = 42
-    selected: list[tuple[int, float]] = []
+    selected: list[tuple[int, float, tuple[int, int, int, int] | None]] = []
     focused: list[tuple[int, str | None]] = []
     events: list[str] = []
 
@@ -67,7 +69,9 @@ async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path)
     monkeypatch.setattr("command_deck.service.read_float32", lambda *_args: 1.5)
     monkeypatch.setattr(
         "command_deck.service.select_preview_mode",
-        lambda process_id, *, ui_scale: selected.append((process_id, ui_scale)),
+        lambda process_id, *, ui_scale, target_bounds: selected.append(
+            (process_id, ui_scale, target_bounds)
+        ),
     )
     monkeypatch.setattr(
         "command_deck.service.focus_process_window",
@@ -76,7 +80,7 @@ async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path)
 
     await service._probe_remix()
 
-    assert selected == [(42, 1.5)]
+    assert selected == [(42, 1.5, (1920, 0, 1080, 1920))]
     assert focused == [(314, "Command Deck")]
     assert service.remix_process_id is None
     assert "remix.preview.ready" in events

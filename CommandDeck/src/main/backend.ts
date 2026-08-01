@@ -25,7 +25,7 @@ export class BackendClient extends EventEmitter {
   private reconnectTimer?: NodeJS.Timeout;
   private stopping = false;
 
-  start(): void {
+  start(targetDisplay?: { x: number; y: number; width: number; height: number }): void {
     if (this.child || this.stopping) return;
 
     const { executable, args, cwd } = this.backendCommand();
@@ -40,6 +40,14 @@ export class BackendClient extends EventEmitter {
         COMMAND_DECK_PORT: String(BACKEND_PORT),
         COMMAND_DECK_TOKEN: this.token,
         COMMAND_DECK_ELECTRON_PID: String(process.pid),
+        ...(targetDisplay
+          ? {
+              COMMAND_DECK_DISPLAY_X: String(targetDisplay.x),
+              COMMAND_DECK_DISPLAY_Y: String(targetDisplay.y),
+              COMMAND_DECK_DISPLAY_WIDTH: String(targetDisplay.width),
+              COMMAND_DECK_DISPLAY_HEIGHT: String(targetDisplay.height),
+            }
+          : {}),
       },
       stdio: ["pipe", "pipe", "pipe"],
     });

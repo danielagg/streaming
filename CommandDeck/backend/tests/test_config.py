@@ -12,18 +12,12 @@ def test_loads_root_camel_case_config(tmp_path):
             {
                 "appName": "Command Deck",
                 "remix": {"websocketUrl": "ws://127.0.0.1:9321", "autoLaunch": False},
-                "globalHotkeys": {
-                    "enabled": True,
-                    "pressesRequired": 3,
-                    "pressWindowMs": 1200,
-                },
                 "actions": [
                     {
                         "id": "croak",
                         "name": "Croak",
                         "stateName": "Croaking",
                         "durationMs": 10,
-                        "hotkey": "F14",
                         "audioPath": "sound.mp3",
                     }
                 ],
@@ -34,7 +28,6 @@ def test_loads_root_camel_case_config(tmp_path):
     config = load_config(path)
     assert config.actions[0].state_name == "Croaking"
     assert config.actions[0].audio_path == (tmp_path / "sound.mp3").resolve()
-    assert config.global_hotkeys.bindings == {"F14": "croak"}
 
 
 def test_rejects_duplicate_action_ids(tmp_path):
