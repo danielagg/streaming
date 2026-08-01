@@ -1,7 +1,7 @@
 {
   "appName": "Command Deck",
   "twitch": {
-    "channel": "",
+    "channel": "berrythefrog",
     "playerParent": "localhost",
     "enabled": false,
     "clientId": "",
