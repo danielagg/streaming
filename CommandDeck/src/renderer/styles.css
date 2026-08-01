@@ -338,9 +338,7 @@ button {
   align-content: start;
   gap: 12px;
   padding: 14px;
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.025), transparent 28%),
-    #0b0e10;
+  background: #0b0e10;
 }
 
 .action-row {
@@ -352,14 +350,13 @@ button {
   height: 88px;
   display: grid;
   place-items: center;
-  padding: 9px 8px 11px;
-  border: 1px solid #080a0b;
-  border-radius: 3px;
-  background: linear-gradient(135deg, #454b4c 0%, #1b1f20 26%, #0b0d0e 72%, #363b3c 100%);
+  padding: 8px;
+  border: 1px solid #3d4446;
+  border-radius: 2px;
+  background: linear-gradient(145deg, #33393b, #15191a 62%);
   box-shadow:
-    inset 1px 1px 0 #62696a,
-    inset -2px -2px 0 #050606,
-    3px 4px 5px rgba(0, 0, 0, 0.72);
+    inset 1px 1px 0 rgba(255, 255, 255, 0.13),
+    2px 3px 4px rgba(0, 0, 0, 0.7);
   cursor: pointer;
   transition:
     transform 0.1s ease,
@@ -380,21 +377,22 @@ button {
 
 .action-lens {
   position: relative;
-  width: 58px;
-  height: 66px;
+  width: 62px;
+  height: 70px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 2px solid #080909;
+  border: 2px solid #090b0b;
   border-radius: 2px;
-  background:
-    linear-gradient(105deg, rgba(255, 255, 255, 0.16), transparent 25% 75%, rgba(0, 0, 0, 0.26)),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
-    var(--lens-off);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--lens-off), white 18%),
+    var(--lens-off) 52%,
+    color-mix(in srgb, var(--lens-off), black 28%)
+  );
   box-shadow:
-    inset 3px 3px 2px rgba(255, 255, 255, 0.09),
-    inset -4px -5px 3px rgba(0, 0, 0, 0.58),
-    0 1px 0 #596061;
+    inset 2px 2px 2px rgba(255, 255, 255, 0.15),
+    inset -3px -4px 3px rgba(0, 0, 0, 0.48);
   transform: perspective(130px) rotateX(-2deg) translateY(-1px);
   transition:
     background-color 0.18s ease,
@@ -406,9 +404,9 @@ button {
 .action-lens::after {
   content: "";
   position: absolute;
-  inset: 4px 5px auto;
+  inset: 5px 7px auto;
   height: 1px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .action-row:hover:not(:disabled) .action-lens {
@@ -442,10 +440,19 @@ button {
   z-index: 1;
   display: block;
   font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
-  font-size: 29px;
+  font-size: 38px;
   line-height: 1;
-  filter: grayscale(1) brightness(0.16) contrast(2.2);
-  opacity: 0.86;
+  filter: saturate(1.18) drop-shadow(0 2px 1px rgba(0, 0, 0, 0.58));
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.action-row--croak .action-icon {
+  font-size: 40px;
+}
+
+.action-row--fly .action-icon {
+  font-size: 37px;
 }
 
 .action-row.is-running {
@@ -457,18 +464,26 @@ button {
 }
 
 .action-row.is-running .action-lens {
-  background:
-    linear-gradient(105deg, rgba(255, 255, 255, 0.5), transparent 24% 72%, rgba(0, 0, 0, 0.12)),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.075) 0 1px, transparent 1px 3px),
-    var(--lens-on);
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--lens-on), white 34%),
+    var(--lens-on) 55%,
+    color-mix(in srgb, var(--lens-on), black 15%)
+  );
   box-shadow:
-    inset 2px 2px 3px rgba(255, 255, 255, 0.38),
-    inset -3px -4px 3px rgba(0, 0, 0, 0.28),
-    0 0 15px var(--lens-glow),
-    0 0 4px var(--lens-glow);
+    inset 2px 2px 2px rgba(255, 255, 255, 0.4),
+    inset -3px -4px 3px rgba(0, 0, 0, 0.22),
+    0 0 14px var(--lens-glow);
   filter: brightness(1.16) saturate(1.18);
   transform: perspective(130px) rotateX(2deg) translateY(2px);
   animation: switch-glow 0.8s ease-in-out infinite alternate;
+}
+
+.action-row.is-running .action-icon {
+  filter:
+    saturate(1.35)
+    brightness(1.12)
+    drop-shadow(0 0 6px rgba(255, 255, 255, 0.72));
 }
 
 .chat-panel {
