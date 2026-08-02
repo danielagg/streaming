@@ -5,6 +5,7 @@ import type {
   ChatMessage as WireChatMessage,
   RendererConfig,
   ServiceStatus,
+  SoundEffect,
 } from '../shared/types';
 import type { BerryActionState, ChatMessage, ConnectionState, DeckStatus } from './types';
 
@@ -15,6 +16,10 @@ export interface DeckBridge {
   getConfig(): Promise<RendererConfig>;
   getInitialStatus(): Promise<DeckStatus>;
   triggerAction(action: BerryActionId): Promise<void>;
+  getSoundEffects(): Promise<SoundEffect[]>;
+  getSoundEffectAudio(id: string): Promise<ArrayBuffer>;
+  setSoundEffectOrder(order: string[]): Promise<SoundEffect[]>;
+  subscribeSoundEffects(listener: (effects: SoundEffect[]) => void): () => void;
   subscribeChat(listener: (message: ChatMessage) => void): () => void;
   subscribeStatus(listener: (status: Partial<DeckStatus>) => void): () => void;
   subscribeActions(listener: (event: BerryActionState) => void): () => void;
@@ -125,6 +130,10 @@ function createLiveBridge(): DeckBridge {
       return deckStatus(await api.getServiceStatuses());
     },
     triggerAction: (action) => api.triggerAction(action),
+    getSoundEffects: () => api.getSoundEffects(),
+    getSoundEffectAudio: (id) => api.getSoundEffectAudio(id),
+    setSoundEffectOrder: (order) => api.setSoundEffectOrder(order),
+    subscribeSoundEffects: (listener) => api.onSoundEffectsChanged(listener),
     subscribeChat: (listener) => add(subscribers.chat, listener),
     subscribeStatus: (listener) => add(subscribers.status, listener),
     subscribeActions: (listener) => add(subscribers.actions, listener),
@@ -146,6 +155,10 @@ function createDemoBridge(): DeckBridge {
         actionSubscribers.forEach((listener) => listener({ action, phase: 'complete' }));
       }, 950);
     },
+    async getSoundEffects() { return []; },
+    async getSoundEffectAudio() { throw new Error('Sound effects are only available in the desktop app.'); },
+    async setSoundEffectOrder() { return []; },
+    subscribeSoundEffects() { return () => undefined; },
     subscribeChat(listener) {
       let cursor = 0;
       DEMO_CHAT.slice(0, 4).forEach((message, index) => {

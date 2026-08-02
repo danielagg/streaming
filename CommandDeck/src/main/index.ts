@@ -13,12 +13,14 @@ import type {
   BackendEvent,
   BerryActionId,
   RendererConfig,
+  SoundEffect,
   ServiceName,
   ServiceStatus,
 } from "../shared/types";
 import { BackendClient } from "./backend";
 import { loadRendererConfig } from "./runtimeConfig";
 import { chooseDisplay, rememberDisplay } from "./settings";
+import { SoundEffectsLibrary } from "./soundEffects";
 import { startRendererServer, type RendererServer } from "./staticServer";
 
 const backend = new BackendClient();
@@ -26,6 +28,16 @@ const rendererConfig: RendererConfig = loadRendererConfig();
 const serviceStatuses = new Map<ServiceName, ServiceStatus>();
 let mainWindow: BrowserWindow | undefined;
 let rendererServer: RendererServer | undefined;
+let soundEffects: SoundEffectsLibrary | undefined;
+let stopWatchingSoundEffects: (() => void) | undefined;
+
+function manualAudioDirectory(): string {
+  const override = process.env.COMMAND_DECK_MANUAL_AUDIO_DIR;
+  if (override) return path.resolve(override);
+  return app.isPackaged
+    ? path.join(path.dirname(process.execPath), "Audio", "Manual")
+    : path.resolve(app.getAppPath(), "..", "Audio", "Manual");
+}
 
 function createWindow(rendererUrl: string): Display {
   const displays = screen.getAllDisplays();
@@ -114,6 +126,25 @@ function registerIpc(): void {
     const window = BrowserWindow.fromWebContents(event.sender);
     window?.setFullScreen(!window.isFullScreen());
   });
+  ipcMain.handle("command-deck:get-sound-effects", (): SoundEffect[] => {
+    if (!soundEffects) throw new Error("Sound effects are not ready.");
+    return soundEffects.list();
+  });
+  ipcMain.handle(
+    "command-deck:get-sound-effect-audio",
+    (_event: IpcMainInvokeEvent, id: string): ArrayBuffer => {
+      if (!soundEffects || typeof id !== "string") throw new Error("Unknown sound effect.");
+      const bytes = soundEffects.readAudio(id);
+      return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) as ArrayBuffer;
+    },
+  );
+  ipcMain.handle(
+    "command-deck:set-sound-effect-order",
+    (_event: IpcMainInvokeEvent, order: string[]): SoundEffect[] => {
+      if (!soundEffects || !Array.isArray(order)) throw new Error("Invalid sound effect order.");
+      return soundEffects.setOrder(order);
+    },
+  );
 }
 
 backend.on("event", (event: BackendEvent) => {
@@ -131,10 +162,19 @@ backend.on("event", (event: BackendEvent) => {
 });
 
 void app.whenReady().then(async () => {
+  soundEffects = new SoundEffectsLibrary(
+    manualAudioDirectory(),
+    path.join(app.getPath("userData"), "sound-effects.json"),
+  );
   registerIpc();
   const devServer = process.env.VITE_DEV_SERVER_URL;
   if (!devServer) rendererServer = await startRendererServer();
   const display = createWindow(devServer ?? rendererServer!.url);
+  stopWatchingSoundEffects = soundEffects.watch((effects) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("command-deck:sound-effects-changed", effects);
+    }
+  });
   backend.start(display.workArea);
 });
 
@@ -151,6 +191,8 @@ app.on("window-all-closed", () => {
 app.on("before-quit", (event) => {
   if ((app as typeof app & { backendStopped?: boolean }).backendStopped) return;
   event.preventDefault();
+  stopWatchingSoundEffects?.();
+  stopWatchingSoundEffects = undefined;
   void backend.stop().finally(() => {
     rendererServer?.close();
     (app as typeof app & { backendStopped?: boolean }).backendStopped = true;

@@ -2,7 +2,7 @@ import { CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { DeckPanel } from "./DeckPanel";
 
-type PlaceholderArea = "sound" | "todo";
+type PlaceholderArea = "todo";
 
 type PlaceholderPanelProps = {
   title: string;
@@ -14,7 +14,6 @@ export function PlaceholderPanel({ title, area }: PlaceholderPanelProps) {
     <DeckPanel
       className={cn(
         "relative col-span-1 row-auto min-h-[190px] items-center justify-center bg-[#0d1215] p-4 text-center after:absolute after:right-2 after:top-2 after:size-1.5 after:border after:border-[#465158]",
-        area === "sound" && "md:col-span-12 md:row-start-4",
         area === "todo" && "md:col-span-12 md:row-start-5",
       )}
       role="region"

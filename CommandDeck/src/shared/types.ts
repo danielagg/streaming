@@ -74,6 +74,11 @@ export interface RendererConfig {
   alertRules: AlertRuleDefinition[];
 }
 
+export interface SoundEffect {
+  id: string;
+  filename: string;
+}
+
 export type BackendEvent =
   | {
       type: "backend.ready";
@@ -110,6 +115,10 @@ export interface CommandDeckAPI {
   triggerAction(actionId: BerryActionId): Promise<void>;
   reconnect(service: Exclude<ServiceName, "backend">): Promise<void>;
   toggleFullscreen(): Promise<void>;
+  getSoundEffects(): Promise<SoundEffect[]>;
+  getSoundEffectAudio(id: string): Promise<ArrayBuffer>;
+  setSoundEffectOrder(order: string[]): Promise<SoundEffect[]>;
+  onSoundEffectsChanged(listener: (effects: SoundEffect[]) => void): () => void;
   onBackendEvent(listener: (event: BackendEvent) => void): () => void;
 }
 

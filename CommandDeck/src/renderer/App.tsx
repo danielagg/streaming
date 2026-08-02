@@ -5,6 +5,7 @@ import { BerryControlsPanel } from "@/features/actions/BerryControlsPanel";
 import { useCommandDeck } from "@/features/deck/useCommandDeck";
 import { TwitchChatPanel } from "@/features/twitch/TwitchChatPanel";
 import { TwitchStreamPanel } from "@/features/twitch/TwitchStreamPanel";
+import { SoundEffectsPanel } from "@/features/soundEffects/SoundEffectsPanel";
 
 export function App() {
   const {
@@ -31,7 +32,7 @@ export function App() {
           onTrigger={(action) => void triggerAction(action)}
         />
         <TwitchChatPanel config={config} />
-        <PlaceholderPanel title="Sound + sound effects" area="sound" />
+        <SoundEffectsPanel />
         <PlaceholderPanel title="Todo" area="todo" />
       </div>
 

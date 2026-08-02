@@ -5,6 +5,7 @@ import type {
   BerryActionId,
   CommandDeckAPI,
   RendererConfig,
+  SoundEffect,
   ServiceStatus,
   ServiceName,
 } from "../shared/types";
@@ -22,6 +23,18 @@ const api: CommandDeckAPI = Object.freeze({
     ipcRenderer.invoke("command-deck:reconnect", service) as Promise<void>,
   toggleFullscreen: () =>
     ipcRenderer.invoke("command-deck:toggle-fullscreen") as Promise<void>,
+  getSoundEffects: () =>
+    ipcRenderer.invoke("command-deck:get-sound-effects") as Promise<SoundEffect[]>,
+  getSoundEffectAudio: (id: string) =>
+    ipcRenderer.invoke("command-deck:get-sound-effect-audio", id) as Promise<ArrayBuffer>,
+  setSoundEffectOrder: (order: string[]) =>
+    ipcRenderer.invoke("command-deck:set-sound-effect-order", order) as Promise<SoundEffect[]>,
+  onSoundEffectsChanged: (listener: (effects: SoundEffect[]) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, effects: SoundEffect[]) =>
+      listener(effects);
+    ipcRenderer.on("command-deck:sound-effects-changed", handler);
+    return () => ipcRenderer.removeListener("command-deck:sound-effects-changed", handler);
+  },
   onBackendEvent: (listener: (event: BackendEvent) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: BackendEvent) =>
       listener(payload);

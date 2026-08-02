@@ -6,6 +6,7 @@ designed to run fullscreen on a rotated monitor and currently contains:
 - a 16:9 Twitch stream monitor;
 - Twitch's live embedded chat surface;
 - compact Whiskey Sip, Croak Twice, and Fly Catch controls for Berry;
+- a manually managed, reorderable sound-effects panel;
 - automatic PNGTuber Remix launch, state control, state restoration, and Croak
   audio playback.
 
@@ -28,6 +29,13 @@ Edit `config.json` before starting a development build. At minimum, set
 
 Do not commit Twitch tokens or client secrets. The Twitch chat embed does not
 need either one.
+
+Sound effects are discovered from `../Audio/Manual` during local development.
+Add or remove MP3 files there while Command Deck is open and the panel updates
+automatically. Reordering in the panel is saved under Electron's per-user app
+data and is restored on the next launch; newly discovered files are appended.
+Packaged builds use `Audio/Manual` beside the executable. Set
+`COMMAND_DECK_MANUAL_AUDIO_DIR` to use a different directory.
 
 Alert rules live as individual JSON files in `alerts/`. The renderer's alert
 engine evaluates these rules against named application events, so panels and

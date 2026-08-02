@@ -25,17 +25,12 @@ export function AlertPanel({ alerts, onDismiss }: AlertPanelProps) {
       aria-live="polite"
     >
       <div className="flex min-h-[62px] min-w-0 items-stretch">
-        <div className="flex w-24 shrink-0 flex-col justify-center border-r border-border bg-[#101518] px-3">
-          <span className="font-mono text-[8px] font-bold uppercase tracking-[.12em] text-muted-foreground">
-            Monitor
-          </span>
-          <span id="alerts-title" className="text-sm font-semibold text-[#e4e9e9]">
-            Alerts
-          </span>
-        </div>
         {alerts.length === 0 ? (
           <div className="flex min-w-0 flex-1 items-center gap-2 px-4 text-xs text-muted-foreground">
-            <CheckCircle2 aria-hidden="true" className="size-4 text-[#719b78]" />
+            <CheckCircle2
+              aria-hidden="true"
+              className="size-4 text-[#719b78]"
+            />
             <span>No active alerts</span>
           </div>
         ) : (
