@@ -27,6 +27,8 @@ def focus_process_window(process_id: int, *, title: str | None = None) -> None:
     ]
     user32.AttachThreadInput.restype = wintypes.BOOL
     user32.ShowWindow.argtypes = [wintypes.HWND, ctypes.c_int]
+    user32.IsIconic.argtypes = [wintypes.HWND]
+    user32.IsIconic.restype = wintypes.BOOL
     user32.BringWindowToTop.argtypes = [wintypes.HWND]
     user32.SetActiveWindow.argtypes = [wintypes.HWND]
     user32.SetForegroundWindow.argtypes = [wintypes.HWND]
@@ -63,7 +65,7 @@ def focus_process_window(process_id: int, *, title: str | None = None) -> None:
             ):
                 attached_threads.append(thread_id)
 
-        user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+        _restore_if_minimized(user32, hwnd)
         user32.BringWindowToTop(hwnd)
         user32.SetActiveWindow(hwnd)
         user32.SetForegroundWindow(hwnd)
@@ -84,6 +86,12 @@ def focus_process_window(process_id: int, *, title: str | None = None) -> None:
     finally:
         for thread_id in reversed(attached_threads):
             user32.AttachThreadInput(current_thread, thread_id, False)
+
+
+def _restore_if_minimized(user32: ctypes.WinDLL, hwnd: int) -> None:
+    """Restore an iconic window without restoring a maximized window down."""
+    if user32.IsIconic(hwnd):
+        user32.ShowWindow(hwnd, 9)  # SW_RESTORE
 
 
 def _find_window(user32: ctypes.WinDLL, process_id: int, title: str | None) -> int:
