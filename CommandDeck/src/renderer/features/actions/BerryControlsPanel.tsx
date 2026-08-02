@@ -1,16 +1,9 @@
 import { DeckPanel } from "@/components/deck/DeckPanel";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { RendererConfig } from "@/bridge";
-import type {
-  BerryAction,
-  BerryActionState,
-  ConnectionState,
-} from "@/types";
+import type { BerryAction, BerryActionState, ConnectionState } from "@/types";
 import { ActionButton } from "./ActionButton";
-import {
-  DEFAULT_ACTIONS,
-  resolveActionDefinition,
-} from "./actionDefinitions";
+import { DEFAULT_ACTIONS, resolveActionDefinition } from "./actionDefinitions";
 import { RemixStatusBadge } from "./RemixStatusBadge";
 
 type BerryControlsPanelProps = {
@@ -53,9 +46,6 @@ export function BerryControlsPanel({
     >
       <CardHeader className="flex h-[46px] shrink-0 grid-cols-none flex-row items-center justify-between border-b bg-[#101518] px-3">
         <div>
-          <span className="mb-0.5 block font-mono text-[8px] font-bold uppercase tracking-[.12em] text-muted-foreground">
-            Character
-          </span>
           <CardTitle
             id="berry-actions-title"
             className="text-sm text-[#e4e9e9]"

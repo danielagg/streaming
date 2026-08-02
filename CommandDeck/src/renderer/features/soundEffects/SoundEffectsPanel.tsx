@@ -182,7 +182,7 @@ export function SoundEffectsPanel() {
             <p className="m-0 text-xs">Add MP3 files to Audio\Manual.</p>
           </div>
         ) : (
-          <ol className="m-0 grid list-none grid-cols-1 gap-px p-0 lg:grid-cols-2">
+          <ol className="m-0 grid list-none grid-cols-2 gap-px p-0">
             {effects.map((effect, index) => {
               const isPlaying = playingId === effect.id;
               const isLoading = loadingId === effect.id;
@@ -233,8 +233,9 @@ export function SoundEffectsPanel() {
                     <GripVertical aria-hidden="true" className="size-3" />
                   </button>
                   <span
-                    className="min-w-0 flex-1 truncate px-1.5 text-[10px] font-medium leading-none text-[#dce4e4]"
+                    className="min-w-0 flex-1 truncate px-1.5 text-[10px] font-medium leading-none text-[#dce4e4] hover:text-[#94b1b1] cursor-pointer"
                     title={effect.filename}
+                    onClick={() => void play(effect)}
                   >
                     {effect.filename}
                   </span>
