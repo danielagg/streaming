@@ -14,6 +14,7 @@ import type {
   BerryActionId,
   RendererConfig,
   ServiceName,
+  ServiceStatus,
 } from "../shared/types";
 import { BackendClient } from "./backend";
 import { loadRendererConfig } from "./runtimeConfig";
@@ -22,6 +23,7 @@ import { startRendererServer, type RendererServer } from "./staticServer";
 
 const backend = new BackendClient();
 const rendererConfig: RendererConfig = loadRendererConfig();
+const serviceStatuses = new Map<ServiceName, ServiceStatus>();
 let mainWindow: BrowserWindow | undefined;
 let rendererServer: RendererServer | undefined;
 
@@ -84,12 +86,16 @@ function createWindow(rendererUrl: string): Display {
 function registerIpc(): void {
   ipcMain.handle("command-deck:get-config", (): RendererConfig => rendererConfig);
   ipcMain.handle(
+    "command-deck:get-service-statuses",
+    (): ServiceStatus[] => [...serviceStatuses.values()],
+  );
+  ipcMain.handle(
     "command-deck:trigger-action",
-    (_event: IpcMainInvokeEvent, actionId: BerryActionId): void => {
+    (_event: IpcMainInvokeEvent, actionId: BerryActionId): Promise<void> => {
       if (!rendererConfig.actions.some((action) => action.id === actionId)) {
         throw new Error("Unknown Berry action");
       }
-      backend.send({ type: "action.trigger", payload: { actionId } });
+      return backend.send({ type: "action.trigger", payload: { actionId } });
     },
   );
   ipcMain.handle(
@@ -97,11 +103,11 @@ function registerIpc(): void {
     (
       _event: IpcMainInvokeEvent,
       service: Exclude<ServiceName, "backend">,
-    ): void => {
+    ): Promise<void> => {
       if (service !== "remix" && service !== "twitch") {
         throw new Error("Unknown service");
       }
-      backend.send({ type: "service.reconnect", payload: { service } });
+      return backend.send({ type: "service.reconnect", payload: { service } });
     },
   );
   ipcMain.handle("command-deck:toggle-fullscreen", (event): void => {
@@ -111,6 +117,9 @@ function registerIpc(): void {
 }
 
 backend.on("event", (event: BackendEvent) => {
+  if (event.type === "service.status") {
+    serviceStatuses.set(event.payload.service, event.payload);
+  }
   if (mainWindow && !mainWindow.isDestroyed()) {
     if (event.type === "remix.preview.ready") {
       if (mainWindow.isMinimized()) mainWindow.restore();

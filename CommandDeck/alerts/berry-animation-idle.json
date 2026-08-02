@@ -1,0 +1,18 @@
+{
+  "id": "berry-animation-idle",
+  "message": "Long time since animation on Berry.",
+  "severity": "warning",
+  "trigger": {
+    "type": "inactivity",
+    "durationMs": 10000,
+    "event": {
+      "type": "berry.action.triggered"
+    }
+  },
+  "resolve": {
+    "type": "event",
+    "event": {
+      "type": "berry.action.triggered"
+    }
+  }
+}

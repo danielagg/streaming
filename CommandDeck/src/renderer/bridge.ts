@@ -1,8 +1,10 @@
 import type {
+  AlertRuleDefinition,
   BackendEvent,
   BerryActionId,
   ChatMessage as WireChatMessage,
   RendererConfig,
+  ServiceStatus,
 } from '../shared/types';
 import type { BerryActionState, ChatMessage, ConnectionState, DeckStatus } from './types';
 
@@ -20,6 +22,13 @@ export interface DeckBridge {
 
 const INITIAL_STATUS: DeckStatus = { backend: 'connecting', twitch: 'connecting', remix: 'connecting' };
 
+const DEMO_ALERT_RULES = Object.values(
+  import.meta.glob<AlertRuleDefinition>("../../alerts/*.json", {
+    eager: true,
+    import: "default",
+  }),
+);
+
 const FALLBACK_CONFIG: RendererConfig = {
   appName: 'Command Deck',
   twitchChannel: 'monstercat',
@@ -29,6 +38,7 @@ const FALLBACK_CONFIG: RendererConfig = {
     { id: 'croak', number: '02', name: 'Croak', description: 'Play the croak animation and audio', durationMs: 4_000, accent: '#9be088' },
     { id: 'fly', number: '03', name: 'Fly', description: 'Send Berry after a passing snack', durationMs: 4_000, accent: '#b8a3ed' },
   ],
+  alertRules: DEMO_ALERT_RULES,
 };
 
 const DEMO_CHAT: Array<Omit<ChatMessage, 'id' | 'timestamp'>> = [
@@ -43,6 +53,14 @@ function connectionState(state: string): ConnectionState {
   if (state === 'online') return 'connected';
   if (state === 'offline' || state === 'error') return 'offline';
   return 'connecting';
+}
+
+function deckStatus(statuses: ServiceStatus[]): DeckStatus {
+  const result = { ...INITIAL_STATUS };
+  statuses.forEach((status) => {
+    result[status.service] = connectionState(status.state);
+  });
+  return result;
 }
 
 function chatMessage(message: WireChatMessage): ChatMessage {
@@ -67,6 +85,8 @@ function createLiveBridge(): DeckBridge {
   };
 
   const unsubscribe = api.onBackendEvent((event: BackendEvent) => {
+    if (event.type === 'backend.ready') return;
+    if (event.type === 'command.result') return;
     if (event.type === 'remix.preview.ready') return;
     if (event.type === 'chat.message') {
       const message = chatMessage(event.payload);
@@ -101,7 +121,9 @@ function createLiveBridge(): DeckBridge {
   return {
     mode: 'live',
     getConfig: () => api.getConfig(),
-    async getInitialStatus() { return INITIAL_STATUS; },
+    async getInitialStatus() {
+      return deckStatus(await api.getServiceStatuses());
+    },
     triggerAction: (action) => api.triggerAction(action),
     subscribeChat: (listener) => add(subscribers.chat, listener),
     subscribeStatus: (listener) => add(subscribers.status, listener),
@@ -117,6 +139,9 @@ function createDemoBridge(): DeckBridge {
     async getInitialStatus() { return { backend: 'connected', twitch: 'connected', remix: 'connected' }; },
     async triggerAction(action) {
       await new Promise((resolve) => window.setTimeout(resolve, 120));
+      actionSubscribers.forEach((listener) =>
+        listener({ action, phase: 'running' }),
+      );
       window.setTimeout(() => {
         actionSubscribers.forEach((listener) => listener({ action, phase: 'complete' }));
       }, 950);

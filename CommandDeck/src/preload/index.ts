@@ -5,12 +5,17 @@ import type {
   BerryActionId,
   CommandDeckAPI,
   RendererConfig,
+  ServiceStatus,
   ServiceName,
 } from "../shared/types";
 
 const api: CommandDeckAPI = Object.freeze({
   getConfig: () =>
     ipcRenderer.invoke("command-deck:get-config") as Promise<RendererConfig>,
+  getServiceStatuses: () =>
+    ipcRenderer.invoke("command-deck:get-service-statuses") as Promise<
+      ServiceStatus[]
+    >,
   triggerAction: (actionId: BerryActionId) =>
     ipcRenderer.invoke("command-deck:trigger-action", actionId) as Promise<void>,
   reconnect: (service: Exclude<ServiceName, "backend">) =>

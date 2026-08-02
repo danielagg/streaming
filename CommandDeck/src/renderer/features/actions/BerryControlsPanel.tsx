@@ -16,6 +16,7 @@ import { RemixStatusBadge } from "./RemixStatusBadge";
 type BerryControlsPanelProps = {
   config: RendererConfig | null;
   remixStatus: ConnectionState;
+  backendStatus: ConnectionState;
   actions: Record<BerryAction, BerryActionState>;
   onTrigger: (action: BerryAction) => void;
 };
@@ -23,9 +24,16 @@ type BerryControlsPanelProps = {
 export function BerryControlsPanel({
   config,
   remixStatus,
+  backendStatus,
   actions,
   onTrigger,
 }: BerryControlsPanelProps) {
+  const effectiveRemixStatus =
+    backendStatus === "connected"
+      ? remixStatus
+      : backendStatus === "offline"
+        ? "offline"
+        : "connecting";
   const configuredActions =
     config?.actions ??
     DEFAULT_ACTIONS.map((action) => ({
@@ -55,7 +63,7 @@ export function BerryControlsPanel({
             Berry controls
           </CardTitle>
         </div>
-        <RemixStatusBadge state={remixStatus} />
+        <RemixStatusBadge state={effectiveRemixStatus} />
       </CardHeader>
       <CardContent className="grid min-h-0 flex-1 auto-rows-[88px] grid-cols-[repeat(auto-fill,78px)] content-start gap-3 bg-[#0b0e10] p-3.5">
         {configuredActions.map((configured) => {
@@ -69,7 +77,7 @@ export function BerryControlsPanel({
               key={configured.id}
               definition={definition}
               state={actions[definition.action]}
-              disabled={remixStatus === "offline"}
+              disabled={effectiveRemixStatus !== "connected"}
               onTrigger={() => onTrigger(definition.action)}
             />
           );

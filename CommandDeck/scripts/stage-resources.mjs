@@ -30,6 +30,16 @@ function copy(sourceRoot, [source, destination]) {
   fs.copyFileSync(sourcePath, destinationPath);
 }
 
+function copyDirectory(sourceRoot, source, destination) {
+  const sourcePath = path.join(sourceRoot, source);
+  const destinationPath = path.join(stagingRoot, destination);
+  if (!fs.existsSync(sourcePath)) {
+    throw new Error(`Required package resource is missing: ${sourcePath}`);
+  }
+  fs.cpSync(sourcePath, destinationPath, { recursive: true });
+}
+
 copies.forEach((entry) => copy(appRoot, entry));
+copyDirectory(appRoot, "alerts", "CommandDeck/alerts");
 workspaceCopies.forEach((entry) => copy(workspaceRoot, entry));
 console.log(`Staged Command Deck resources in ${stagingRoot}`);

@@ -43,6 +43,22 @@ async def test_invalid_command_is_rejected():
 
 
 @pytest.mark.asyncio
+async def test_ping_acknowledges_command_channel():
+    service = CommandDeckService(default_config(), mock_remix=True)
+    messages = []
+
+    async def capture(kind, payload, request_id=None):
+        messages.append((kind, payload, request_id))
+
+    service.emit = capture
+    await service.handle_command(
+        {"version": 1, "id": "ping-1", "type": "backend.ping", "payload": {}}
+    )
+
+    assert messages == [("command.result", {"ok": True}, "ping-1")]
+
+
+@pytest.mark.asyncio
 async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path):
     monkeypatch.setenv("COMMAND_DECK_ELECTRON_PID", "314")
     monkeypatch.setenv("COMMAND_DECK_DISPLAY_X", "1920")
@@ -60,11 +76,26 @@ async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path)
     selected: list[tuple[int, float, tuple[int, int, int, int] | None]] = []
     focused: list[tuple[int, str | None]] = []
     events: list[str] = []
+    remix_closed = 0
+    state_list_calls = 0
 
     async def capture(event_type, _payload, _request_id=None):
         events.append(event_type)
 
     service.emit = capture
+    original_list_states = service.remix.list_states
+
+    async def list_states():
+        nonlocal state_list_calls
+        state_list_calls += 1
+        return await original_list_states()
+
+    async def close_remix():
+        nonlocal remix_closed
+        remix_closed += 1
+
+    service.remix.close = close_remix
+    service.remix.list_states = list_states
 
     monkeypatch.setattr("command_deck.service.read_float32", lambda *_args: 1.5)
     monkeypatch.setattr(
@@ -83,4 +114,34 @@ async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path)
     assert selected == [(42, 1.5, (1920, 0, 1080, 1920))]
     assert focused == [(314, "Command Deck")]
     assert service.remix_process_id is None
+    assert remix_closed == 1
+    assert state_list_calls == 2
     assert "remix.preview.ready" in events
+
+
+@pytest.mark.asyncio
+async def test_action_rejection_emits_a_terminal_error():
+    service = CommandDeckService(default_config(), mock_remix=True)
+    messages = []
+
+    async def capture(kind, payload, request_id=None):
+        messages.append((kind, payload, request_id))
+
+    async def reject(_action_id, _request_id):
+        raise RuntimeError("Another Berry action is already running.")
+
+    service.emit = capture
+    service.controller.trigger = reject
+
+    await service._run_action("whiskey", "request-2")
+
+    assert messages == [
+        (
+            "berry.action.error",
+            {
+                "actionId": "whiskey",
+                "message": "Another Berry action is already running.",
+            },
+            "request-2",
+        )
+    ]

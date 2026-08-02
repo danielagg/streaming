@@ -1,6 +1,8 @@
 import type { BackendEvent } from "./types";
 
 const BACKEND_EVENT_TYPES = new Set<BackendEvent["type"]>([
+  "backend.ready",
+  "command.result",
   "service.status",
   "remix.preview.ready",
   "chat.message",

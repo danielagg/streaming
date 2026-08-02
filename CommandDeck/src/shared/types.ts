@@ -42,14 +42,52 @@ export interface BerryActionDefinition {
   accent: string;
 }
 
+export type AlertSeverity = "info" | "warning" | "critical";
+
+export type AlertEventValue = string | number | boolean;
+
+export interface AlertEventMatcher {
+  type: string;
+  where?: Record<string, AlertEventValue | AlertEventValue[]>;
+}
+
+export interface AlertRuleDefinition {
+  id: string;
+  message: string;
+  severity: AlertSeverity;
+  trigger: {
+    type: "inactivity";
+    durationMs: number;
+    event: AlertEventMatcher;
+  };
+  resolve: {
+    type: "event";
+    event: AlertEventMatcher;
+  };
+}
+
 export interface RendererConfig {
   appName: "Command Deck";
   twitchChannel: string;
   twitchPlayerParent: string;
   actions: BerryActionDefinition[];
+  alertRules: AlertRuleDefinition[];
 }
 
 export type BackendEvent =
+  | {
+      type: "backend.ready";
+      payload: {
+        name: string;
+        protocolVersion: number;
+        actions: Array<{ id: string; name: string; durationMs: number }>;
+      };
+    }
+  | {
+      type: "command.result";
+      requestId: string;
+      payload: { ok: boolean; accepted?: boolean; message?: string };
+    }
   | { type: "service.status"; payload: ServiceStatus }
   | { type: "remix.preview.ready"; payload: Record<string, never> }
   | { type: "chat.message"; payload: ChatMessage }
@@ -68,6 +106,7 @@ export type BackendEvent =
 
 export interface CommandDeckAPI {
   getConfig(): Promise<RendererConfig>;
+  getServiceStatuses(): Promise<ServiceStatus[]>;
   triggerAction(actionId: BerryActionId): Promise<void>;
   reconnect(service: Exclude<ServiceName, "backend">): Promise<void>;
   toggleFullscreen(): Promise<void>;

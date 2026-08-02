@@ -10,6 +10,7 @@ import { isBackendEvent } from "../shared/protocol";
 
 const BACKEND_PORT = Number(process.env.COMMAND_DECK_BACKEND_PORT ?? 8765);
 const RECONNECT_DELAY_MS = 1_000;
+const COMMAND_TIMEOUT_MS = 5_000;
 
 type BackendCommand =
   | { type: "action.trigger"; payload: { actionId: BerryActionId } }
@@ -22,7 +23,17 @@ export class BackendClient extends EventEmitter {
   private readonly token = randomBytes(32).toString("hex");
   private child?: ChildProcessWithoutNullStreams;
   private socket?: WebSocket;
+  private backendReady = false;
+  private handshakeId?: string;
   private reconnectTimer?: NodeJS.Timeout;
+  private readonly pendingCommands = new Map<
+    string,
+    {
+      resolve: () => void;
+      reject: (error: Error) => void;
+      timeout: NodeJS.Timeout;
+    }
+  >();
   private stopping = false;
 
   start(targetDisplay?: { x: number; y: number; width: number; height: number }): void {
@@ -76,13 +87,26 @@ export class BackendClient extends EventEmitter {
     this.connect();
   }
 
-  send(command: BackendCommand): void {
-    if (this.socket?.readyState !== WebSocket.OPEN) {
-      throw new Error("Command Deck backend is not connected");
+  send(command: BackendCommand): Promise<void> {
+    const socket = this.socket;
+    if (socket?.readyState !== WebSocket.OPEN || !this.backendReady) {
+      return Promise.reject(new Error("Command Deck backend is not connected"));
     }
-    this.socket.send(
-      JSON.stringify({ version: 1, id: randomUUID(), ...command }),
-    );
+    const id = randomUUID();
+    return new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.pendingCommands.delete(id);
+        reject(new Error("Command Deck backend did not accept the command."));
+      }, COMMAND_TIMEOUT_MS);
+      this.pendingCommands.set(id, { resolve, reject, timeout });
+      socket.send(
+        JSON.stringify({ version: 1, id, ...command }),
+        (error) => {
+          if (!error) return;
+          this.finishCommand(id, error);
+        },
+      );
+    });
   }
 
   async stop(): Promise<void> {
@@ -149,17 +173,52 @@ export class BackendClient extends EventEmitter {
 
   private connect(): void {
     if (this.stopping) return;
+    if (
+      this.socket?.readyState === WebSocket.CONNECTING ||
+      this.socket?.readyState === WebSocket.OPEN
+    ) {
+      return;
+    }
+    this.reconnectTimer = undefined;
 
     const socket = new WebSocket(
       `ws://127.0.0.1:${BACKEND_PORT}/ws?token=${encodeURIComponent(this.token)}`,
     );
     this.socket = socket;
 
-    socket.on("open", () => this.emitStatus("online"));
+    socket.on("open", () => {
+      if (this.socket !== socket) {
+        socket.close();
+      }
+    });
     socket.on("message", (raw) => {
       try {
         const event: unknown = JSON.parse(raw.toString());
-        if (isBackendEvent(event)) this.emit("event", event);
+        if (!isBackendEvent(event)) return;
+        if (event.type === "backend.ready") {
+          this.startHandshake(socket);
+          return;
+        }
+        if (event.type === "command.result") {
+          if (event.requestId === this.handshakeId) {
+            this.handshakeId = undefined;
+            if (!event.payload.ok) {
+              socket.close(1011, "Backend handshake failed");
+              return;
+            }
+            this.backendReady = true;
+            this.emitStatus("online");
+            return;
+          }
+          this.finishCommand(
+            event.requestId,
+            event.payload.ok
+              ? undefined
+              : new Error(event.payload.message ?? "Backend command failed."),
+          );
+          return;
+        }
+        this.emit("event", event);
       } catch (error) {
         console.error("Ignoring malformed backend message", error);
       }
@@ -168,12 +227,42 @@ export class BackendClient extends EventEmitter {
       // The close handler reports/retries; connection errors are expected at startup.
     });
     socket.on("close", () => {
-      if (this.socket === socket) this.socket = undefined;
-      if (!this.stopping) {
-        this.emitStatus("connecting", "Waiting for backend");
-        this.reconnectTimer = setTimeout(() => this.connect(), RECONNECT_DELAY_MS);
-      }
+      if (this.socket !== socket) return;
+      this.socket = undefined;
+      this.backendReady = false;
+      this.handshakeId = undefined;
+      this.rejectPendingCommands("Command Deck backend disconnected.");
+      if (this.stopping) return;
+      this.emitStatus("connecting", "Waiting for backend");
+      this.reconnectTimer = setTimeout(() => this.connect(), RECONNECT_DELAY_MS);
     });
+  }
+
+  private startHandshake(socket: WebSocket): void {
+    if (this.socket !== socket || socket.readyState !== WebSocket.OPEN) return;
+    const id = randomUUID();
+    this.handshakeId = id;
+    socket.send(
+      JSON.stringify({ version: 1, id, type: "backend.ping", payload: {} }),
+      (error) => {
+        if (error) socket.close(1011, "Backend handshake send failed");
+      },
+    );
+  }
+
+  private finishCommand(id: string, error?: Error): void {
+    const pending = this.pendingCommands.get(id);
+    if (!pending) return;
+    clearTimeout(pending.timeout);
+    this.pendingCommands.delete(id);
+    if (error) pending.reject(error);
+    else pending.resolve();
+  }
+
+  private rejectPendingCommands(message: string): void {
+    for (const id of this.pendingCommands.keys()) {
+      this.finishCommand(id, new Error(message));
+    }
   }
 
   private emitStatus(

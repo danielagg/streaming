@@ -29,6 +29,34 @@ Edit `config.json` before starting a development build. At minimum, set
 Do not commit Twitch tokens or client secrets. The Twitch chat embed does not
 need either one.
 
+Alert rules live as individual JSON files in `alerts/`. The renderer's alert
+engine evaluates these rules against named application events, so panels and
+buttons do not contain rule-specific trigger or resolution logic. For example,
+`berry-animation-idle.json` watches for four minutes without a
+`berry.action.triggered` event and uses that same event to resolve the alert.
+
+Each alert file has this shape:
+
+```json
+{
+  "id": "unique-alert-id",
+  "message": "Message shown in the alert panel.",
+  "severity": "warning",
+  "trigger": {
+    "type": "inactivity",
+    "durationMs": 240000,
+    "event": { "type": "application.event.name" }
+  },
+  "resolve": {
+    "type": "event",
+    "event": { "type": "application.event.name" }
+  }
+}
+```
+
+An event matcher can optionally contain a `where` object to match payload
+properties. A property may be one value or an array of accepted values.
+
 The Remix executable path currently points to:
 
 ```text

@@ -150,11 +150,13 @@ class CommandDeckService:
             raise ValueError("Invalid protocol command.")
         command_type, request_id = command.get("type"), command["id"]
         payload = command.get("payload", {})
-        if command_type == "action.trigger":
+        if command_type == "backend.ping":
+            await self.emit("command.result", {"ok": True}, request_id)
+        elif command_type == "action.trigger":
             action_id = payload.get("actionId")
             if not isinstance(action_id, str):
                 raise ValueError("action.trigger requires payload.actionId.")
-            task = asyncio.create_task(self.controller.trigger(action_id, request_id))
+            task = asyncio.create_task(self._run_action(action_id, request_id))
             self.tasks.add(task)
             task.add_done_callback(self.tasks.discard)
             await self.emit(
@@ -199,6 +201,16 @@ class CommandDeckService:
         else:
             raise ValueError(f"Unknown command type: {command_type}")
 
+    async def _run_action(self, action_id: str, request_id: str) -> None:
+        try:
+            await self.controller.trigger(action_id, request_id)
+        except Exception as error:  # noqa: BLE001 - every action needs a terminal event
+            await self.emit(
+                "berry.action.error",
+                {"actionId": action_id, "message": str(error)},
+                request_id,
+            )
+
     async def start(self) -> None:
         if not self.mock_remix:
             try:
@@ -231,7 +243,11 @@ class CommandDeckService:
         for _attempt in range(attempts):
             try:
                 states = await self.remix.list_states()
-                await self._ensure_preview_mode()
+                preview_changed = await self._ensure_preview_mode()
+                if preview_changed:
+                    # Preview mode restarts Remix's command handling. Prove a
+                    # fresh request/response round trip before enabling actions.
+                    states = await self.remix.list_states()
                 await self.emit(
                     "service.status",
                     {
@@ -256,13 +272,13 @@ class CommandDeckService:
             None,
         )
 
-    async def _ensure_preview_mode(self) -> None:
+    async def _ensure_preview_mode(self) -> bool:
         if (
             not self.config.force_remix_preview
             or self.remix_process_id is None
             or self.config.remix_executable_path is None
         ):
-            return
+            return False
         preferences = self.config.remix_executable_path.parent / "Preferences.pRDat"
         ui_scale = read_float32(preferences, "ui_scaling")
         await asyncio.to_thread(
@@ -271,6 +287,9 @@ class CommandDeckService:
             ui_scale=ui_scale,
             target_bounds=self.target_display_bounds,
         )
+        # Switching Remix into Preview mode leaves its existing WebSocket
+        # connected but unresponsive. Reconnect before the first action.
+        await self.remix.close()
         self.remix_process_id = None
         if self.electron_process_id is not None:
             with contextlib.suppress(RuntimeError):
@@ -280,6 +299,7 @@ class CommandDeckService:
                     title="Command Deck",
                 )
         await self.emit("remix.preview.ready", {}, None)
+        return True
 
     async def close(self) -> None:
         for task in self.tasks:
