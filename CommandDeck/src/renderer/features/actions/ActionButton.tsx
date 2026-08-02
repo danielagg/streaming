@@ -19,7 +19,6 @@ export function ActionButton({
   onTrigger,
 }: ActionButtonProps) {
   const active = state.phase === "running";
-  const Icon = definition.icon;
   const colors = ACTION_COLORS[definition.action];
 
   return (
@@ -52,14 +51,14 @@ export function ActionButton({
             "translate-y-0.5 animate-switch-glow bg-[linear-gradient(145deg,color-mix(in_srgb,var(--lens-on),white_34%),var(--lens-on)_55%,color-mix(in_srgb,var(--lens-on),black_15%))] shadow-[inset_2px_2px_2px_rgba(255,255,255,.4),inset_-3px_-4px_3px_rgba(0,0,0,.22),0_0_14px_var(--lens-glow)]",
         )}
       >
-        <Icon
+        <div
           className={cn(
-            "relative z-10 size-9 text-white/90 drop-shadow-[0_2px_1px_rgba(0,0,0,.58)]",
-            active &&
-              "text-white drop-shadow-[0_0_6px_rgba(255,255,255,.72)]",
+            "text-xl relative flex items-center justify-center text-white/90 drop-shadow-[0_2px_1px_rgba(0,0,0,.58)]",
+            active && "text-white drop-shadow-[0_0_6px_rgba(255,255,255,.72)]",
           )}
-          strokeWidth={1.65}
-        />
+        >
+          {definition.icon}
+        </div>
       </span>
     </Button>
   );

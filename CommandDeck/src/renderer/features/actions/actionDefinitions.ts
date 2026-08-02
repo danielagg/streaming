@@ -1,17 +1,15 @@
-import { Bug, GlassWater, Music2, type LucideIcon } from "lucide-react";
-
 import type { BerryAction } from "@/types";
 
 export type ActionDefinition = {
   action: BerryAction;
   label: string;
-  icon: LucideIcon;
+  icon: string;
 };
 
 export const DEFAULT_ACTIONS: ActionDefinition[] = [
-  { action: "whiskey", label: "Whiskey Sip", icon: GlassWater },
-  { action: "croak", label: "Croak Twice", icon: Music2 },
-  { action: "fly", label: "Fly Catch", icon: Bug },
+  { action: "whiskey", label: "Whiskey Sip", icon: "🥃" },
+  { action: "croak", label: "Croak Twice", icon: "🐸" },
+  { action: "fly", label: "Fly Catch", icon: "🪰" },
 ];
 
 export const ACTION_COLORS: Record<
