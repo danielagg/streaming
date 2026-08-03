@@ -247,7 +247,7 @@ export function SoundEffectsPanel() {
                     className="size-5 rounded-sm"
                     disabled={isLoading}
                     aria-label={`Play ${effect.filename}`}
-                    onClick={() => void play(effect)}
+                    onClick={() => (isPlaying ? stop() : play(effect))}
                   >
                     {isLoading ? (
                       <LoaderCircle
@@ -255,25 +255,20 @@ export function SoundEffectsPanel() {
                         className="size-3 animate-spin"
                       />
                     ) : (
-                      <Play
-                        aria-hidden="true"
-                        className="size-3  fill-current"
-                      />
+                      <>
+                        {isPlaying ? (
+                          <Square
+                            aria-hidden="true"
+                            className="size-2.5 fill-current"
+                          />
+                        ) : (
+                          <Play
+                            aria-hidden="true"
+                            className="size-3  fill-current"
+                          />
+                        )}
+                      </>
                     )}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="size-5 rounded-sm"
-                    disabled={!isPlaying && !isLoading}
-                    aria-label={`Stop ${effect.filename}`}
-                    onClick={stop}
-                  >
-                    <Square
-                      aria-hidden="true"
-                      className="size-2.5 fill-current"
-                    />
                   </Button>
                 </li>
               );
