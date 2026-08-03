@@ -19,6 +19,7 @@ const INITIAL_STATUS: DeckStatus = {
   backend: "connecting",
   twitch: "connecting",
   remix: "connecting",
+  obs: "connecting",
 };
 
 const EMPTY_ALERT_RULES: AlertRuleDefinition[] = [];

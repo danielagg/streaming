@@ -5,6 +5,8 @@ const BACKEND_EVENT_TYPES = new Set<BackendEvent["type"]>([
   "command.result",
   "service.status",
   "remix.preview.ready",
+  "obs.scene.changed",
+  "obs.music.tail",
   "chat.message",
   "berry.action.progress",
   "berry.action.completed",

@@ -9,6 +9,7 @@ import type {
   AlertSeverity,
   BerryActionDefinition,
   BerryActionId,
+  ObsSceneDefinition,
   RendererConfig,
 } from "../shared/types";
 
@@ -22,6 +23,17 @@ interface RawConfig {
     durationMs?: number;
     accent?: string;
   }>;
+  obs?: {
+    enabled?: boolean;
+    scenes?: Array<{
+      id?: string;
+      name?: string;
+      label?: string;
+      accent?: string;
+    }>;
+    musicTailMs?: number;
+    musicFadeMs?: number;
+  };
 }
 
 const ACTION_IDS = new Set<BerryActionId>(["whiskey", "croak", "fly"]);
@@ -170,6 +182,20 @@ export function loadRendererConfig(): RendererConfig {
     };
   });
   if (actions.length === 0) throw new Error("Command Deck has no Berry actions.");
+  const obsScenes = (raw.obs?.scenes ?? []).map((scene): ObsSceneDefinition => {
+    if (!scene.id?.trim() || !scene.name?.trim()) {
+      throw new Error("Every OBS scene needs an id and name.");
+    }
+    return {
+      id: scene.id,
+      name: scene.name,
+      label: scene.label?.trim() || scene.name,
+      accent: scene.accent ?? "#83e8ee",
+    };
+  });
+  if (new Set(obsScenes.map((scene) => scene.id)).size !== obsScenes.length) {
+    throw new Error("OBS scene ids must be unique.");
+  }
   return {
     appName: "Command Deck",
     twitchChannel:
@@ -177,5 +203,11 @@ export function loadRendererConfig(): RendererConfig {
     twitchPlayerParent: raw.twitch?.playerParent ?? "localhost",
     actions,
     alertRules: loadAlertRules(),
+    obs: {
+      enabled: raw.obs?.enabled ?? false,
+      scenes: obsScenes,
+      musicTailMs: raw.obs?.musicTailMs ?? 30_000,
+      musicFadeMs: raw.obs?.musicFadeMs ?? 5_000,
+    },
   };
 }

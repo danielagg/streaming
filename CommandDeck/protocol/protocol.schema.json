@@ -16,6 +16,8 @@
         "type": {
           "enum": [
             "action.trigger",
+            "obs.scene.set",
+            "obs.music.stop",
             "service.reconnect",
             "backend.ping",
             "backend.shutdown"
@@ -37,6 +39,8 @@
             "command.result",
             "service.status",
             "remix.preview.ready",
+            "obs.scene.changed",
+            "obs.music.tail",
             "chat.message",
             "berry.action.progress",
             "berry.action.completed",

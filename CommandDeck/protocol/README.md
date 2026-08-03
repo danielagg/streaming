@@ -34,6 +34,23 @@ sidecar, passes it in `COMMAND_DECK_TOKEN`, and supplies it as the WebSocket
 ```json
 {
   "version": 1,
+  "id": "01K2...",
+  "type": "obs.scene.set",
+  "payload": { "sceneName": "Starting Soon" }
+}
+```
+
+```json
+{
+  "version": 1,
+  "type": "obs.music.tail",
+  "payload": { "state": "fading", "remainingMs": 4200 }
+}
+```
+
+```json
+{
+  "version": 1,
   "type": "chat.message",
   "payload": {
     "id": "message-id",

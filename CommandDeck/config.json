@@ -8,6 +8,36 @@
     "broadcasterId": "",
     "tokenPath": ""
   },
+  "obs": {
+    "enabled": true,
+    "websocketUrl": "ws://127.0.0.1:4455",
+    "scenes": [
+      {
+        "id": "main",
+        "name": "Main (screen share)",
+        "label": "Main",
+        "accent": "#58aeb5"
+      },
+      {
+        "id": "starting-soon",
+        "name": "Starting Soon",
+        "label": "Starting Soon",
+        "accent": "#d5a653"
+      },
+      {
+        "id": "brb",
+        "name": "BRB",
+        "label": "BRB",
+        "accent": "#d96d91"
+      }
+    ],
+    "startingSoonScene": "Starting Soon",
+    "mainScene": "Main (screen share)",
+    "brbScene": "BRB",
+    "musicInput": "StartingSoon Music",
+    "musicTailMs": 30000,
+    "musicFadeMs": 5000
+  },
   "backend": {
     "host": "127.0.0.1",
     "port": 8765

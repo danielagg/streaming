@@ -1,11 +1,11 @@
 import { ErrorToast } from "@/components/deck/ErrorToast";
-import { PlaceholderPanel } from "@/components/deck/PlaceholderPanel";
 import { AlertPanel } from "@/features/alerts/AlertPanel";
 import { BerryControlsPanel } from "@/features/actions/BerryControlsPanel";
 import { useCommandDeck } from "@/features/deck/useCommandDeck";
 import { TwitchChatPanel } from "@/features/twitch/TwitchChatPanel";
 import { TwitchStreamPanel } from "@/features/twitch/TwitchStreamPanel";
 import { SoundEffectsPanel } from "@/features/soundEffects/SoundEffectsPanel";
+import { ObsScenesPanel } from "@/features/obs/ObsScenesPanel";
 
 export function App() {
   const {
@@ -33,7 +33,7 @@ export function App() {
         />
         <TwitchChatPanel config={config} />
         <SoundEffectsPanel />
-        <PlaceholderPanel title="Todo" area="todo" />
+        <ObsScenesPanel config={config} status={status.obs} />
       </div>
 
       {error && <ErrorToast message={error} onDismiss={dismissError} />}

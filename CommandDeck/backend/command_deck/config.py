@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -27,6 +28,28 @@ class TwitchConfig:
 
 
 @dataclass(frozen=True, slots=True)
+class ObsSceneDefinition:
+    id: str
+    name: str
+    label: str
+    accent: str = "#83e8ee"
+
+
+@dataclass(frozen=True, slots=True)
+class ObsConfig:
+    enabled: bool = False
+    websocket_url: str = "ws://127.0.0.1:4455"
+    password: str | None = None
+    scenes: tuple[ObsSceneDefinition, ...] = ()
+    starting_soon_scene: str = "Starting Soon"
+    main_scene: str = "Main (screen share)"
+    brb_scene: str = "BRB"
+    music_input: str = "StartingSoon Music"
+    music_tail_ms: int = 30_000
+    music_fade_ms: int = 5_000
+
+
+@dataclass(frozen=True, slots=True)
 class AppConfig:
     app_name: str
     remix_websocket_url: str
@@ -37,6 +60,7 @@ class AppConfig:
     remix_executable_path: Path | None = None
     remix_model_path: Path | None = None
     twitch: TwitchConfig = field(default_factory=TwitchConfig)
+    obs: ObsConfig = field(default_factory=ObsConfig)
 
 
 def default_config() -> AppConfig:
@@ -112,6 +136,47 @@ def load_config(path: Path | None) -> AppConfig:
             base, twitch_raw.get("token_path", twitch_raw.get("tokenPath"))
         ),
     )
+    obs_raw = raw.get("obs", {})
+    obs_scenes = tuple(
+        ObsSceneDefinition(
+            id=str(item["id"]),
+            name=str(item["name"]),
+            label=str(item.get("label", item["name"])),
+            accent=str(item.get("accent", "#83e8ee")),
+        )
+        for item in obs_raw.get("scenes", [])
+    )
+    if len({scene.id for scene in obs_scenes}) != len(obs_scenes):
+        raise ValueError("OBS scene ids must be unique.")
+    if len({scene.name for scene in obs_scenes}) != len(obs_scenes):
+        raise ValueError("OBS scene names must be unique.")
+    password = os.environ.get("COMMAND_DECK_OBS_PASSWORD") or obs_raw.get("password")
+    password_path = _path(base, obs_raw.get("passwordPath"))
+    default_password_path = base / "obs-password.txt"
+    if password_path is None and default_password_path.is_file():
+        password_path = default_password_path
+    if not password and password_path is not None:
+        password = password_path.read_text(encoding="utf-8").strip() or None
+    music_tail_ms = int(obs_raw.get("musicTailMs", 30_000))
+    music_fade_ms = int(obs_raw.get("musicFadeMs", 5_000))
+    if music_tail_ms < 0:
+        raise ValueError("OBS music tail duration cannot be negative.")
+    if music_fade_ms < 0 or music_fade_ms > music_tail_ms:
+        raise ValueError("OBS music fade must fit inside the music tail.")
+    obs = ObsConfig(
+        enabled=bool(obs_raw.get("enabled", False)),
+        websocket_url=str(obs_raw.get("websocketUrl", "ws://127.0.0.1:4455")),
+        password=str(password) if password else None,
+        scenes=obs_scenes,
+        starting_soon_scene=str(
+            obs_raw.get("startingSoonScene", "Starting Soon")
+        ),
+        main_scene=str(obs_raw.get("mainScene", "Main (screen share)")),
+        brb_scene=str(obs_raw.get("brbScene", "BRB")),
+        music_input=str(obs_raw.get("musicInput", "StartingSoon Music")),
+        music_tail_ms=music_tail_ms,
+        music_fade_ms=music_fade_ms,
+    )
     remix_raw = raw.get("remix", {})
     return AppConfig(
         app_name=str(raw.get("app_name", raw.get("appName", "Command Deck"))),
@@ -144,4 +209,5 @@ def load_config(path: Path | None) -> AppConfig:
             base, raw.get("remix_model_path", remix_raw.get("modelPath"))
         ),
         twitch=twitch,
+        obs=obs,
     )

@@ -4,6 +4,7 @@ import type {
   BackendEvent,
   BerryActionId,
   CommandDeckAPI,
+  ObsState,
   RendererConfig,
   SoundEffect,
   ServiceStatus,
@@ -29,6 +30,12 @@ const api: CommandDeckAPI = Object.freeze({
     ipcRenderer.invoke("command-deck:get-sound-effect-audio", id) as Promise<ArrayBuffer>,
   setSoundEffectOrder: (order: string[]) =>
     ipcRenderer.invoke("command-deck:set-sound-effect-order", order) as Promise<SoundEffect[]>,
+  getObsState: () =>
+    ipcRenderer.invoke("command-deck:get-obs-state") as Promise<ObsState>,
+  setObsScene: (sceneName: string) =>
+    ipcRenderer.invoke("command-deck:set-obs-scene", sceneName) as Promise<void>,
+  stopObsMusic: () =>
+    ipcRenderer.invoke("command-deck:stop-obs-music") as Promise<void>,
   onSoundEffectsChanged: (listener: (effects: SoundEffect[]) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, effects: SoundEffect[]) =>
       listener(effects);

@@ -12,12 +12,14 @@ import {
 import type {
   BackendEvent,
   BerryActionId,
+  ObsState,
   RendererConfig,
   SoundEffect,
   ServiceName,
   ServiceStatus,
 } from "../shared/types";
 import { BackendClient } from "./backend";
+import { chooseLandscapeDisplay } from "./displays";
 import { loadRendererConfig } from "./runtimeConfig";
 import { chooseDisplay, rememberDisplay } from "./settings";
 import { SoundEffectsLibrary } from "./soundEffects";
@@ -26,6 +28,10 @@ import { startRendererServer, type RendererServer } from "./staticServer";
 const backend = new BackendClient();
 const rendererConfig: RendererConfig = loadRendererConfig();
 const serviceStatuses = new Map<ServiceName, ServiceStatus>();
+const obsState: ObsState = {
+  currentScene: null,
+  musicTail: { state: "idle", remainingMs: 0 },
+};
 let mainWindow: BrowserWindow | undefined;
 let rendererServer: RendererServer | undefined;
 let soundEffects: SoundEffectsLibrary | undefined;
@@ -110,13 +116,29 @@ function registerIpc(): void {
       return backend.send({ type: "action.trigger", payload: { actionId } });
     },
   );
+  ipcMain.handle("command-deck:get-obs-state", (): ObsState => ({
+    currentScene: obsState.currentScene,
+    musicTail: { ...obsState.musicTail },
+  }));
+  ipcMain.handle(
+    "command-deck:set-obs-scene",
+    (_event: IpcMainInvokeEvent, sceneName: string): Promise<void> => {
+      if (!rendererConfig.obs.scenes.some((scene) => scene.name === sceneName)) {
+        throw new Error("Unknown OBS scene");
+      }
+      return backend.send({ type: "obs.scene.set", payload: { sceneName } });
+    },
+  );
+  ipcMain.handle("command-deck:stop-obs-music", (): Promise<void> =>
+    backend.send({ type: "obs.music.stop", payload: {} }),
+  );
   ipcMain.handle(
     "command-deck:reconnect",
     (
       _event: IpcMainInvokeEvent,
       service: Exclude<ServiceName, "backend">,
     ): Promise<void> => {
-      if (service !== "remix" && service !== "twitch") {
+      if (service !== "remix" && service !== "twitch" && service !== "obs") {
         throw new Error("Unknown service");
       }
       return backend.send({ type: "service.reconnect", payload: { service } });
@@ -151,6 +173,12 @@ backend.on("event", (event: BackendEvent) => {
   if (event.type === "service.status") {
     serviceStatuses.set(event.payload.service, event.payload);
   }
+  if (event.type === "obs.scene.changed") {
+    obsState.currentScene = event.payload.sceneName;
+  }
+  if (event.type === "obs.music.tail") {
+    obsState.musicTail = event.payload;
+  }
   if (mainWindow && !mainWindow.isDestroyed()) {
     if (event.type === "remix.preview.ready") {
       if (mainWindow.isMinimized()) mainWindow.restore();
@@ -169,13 +197,17 @@ void app.whenReady().then(async () => {
   registerIpc();
   const devServer = process.env.VITE_DEV_SERVER_URL;
   if (!devServer) rendererServer = await startRendererServer();
-  const display = createWindow(devServer ?? rendererServer!.url);
+  createWindow(devServer ?? rendererServer!.url);
+  const remixDisplay = chooseLandscapeDisplay(
+    screen.getAllDisplays(),
+    screen.getPrimaryDisplay(),
+  );
   stopWatchingSoundEffects = soundEffects.watch((effects) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send("command-deck:sound-effects-changed", effects);
     }
   });
-  backend.start(display.workArea);
+  backend.start(remixDisplay.workArea);
 });
 
 app.on("activate", () => {

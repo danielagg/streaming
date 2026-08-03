@@ -14,6 +14,13 @@ describe("isBackendEvent", () => {
     expect(
       isBackendEvent({
         version: 1,
+        type: "obs.scene.changed",
+        payload: { sceneName: "Starting Soon" },
+      }),
+    ).toBe(true);
+    expect(
+      isBackendEvent({
+        version: 1,
         type: "backend.ready",
         payload: { name: "Command Deck", protocolVersion: 1, actions: [] },
       }),

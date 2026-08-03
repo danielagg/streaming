@@ -9,6 +9,7 @@ from aiohttp import WSMsgType, web
 
 from .config import AppConfig
 from .controller import ActionController
+from .obs import ObsService
 from .remix import MockRemixClient, RemixClient
 from .remix_window import select_preview_mode
 from .startup import launch_remix, read_float32
@@ -51,6 +52,7 @@ class CommandDeckService:
         )
         self.controller = ActionController(config.actions, self.remix, self.emit)
         self.twitch = TwitchChatService(config.twitch, self.emit)
+        self.obs = ObsService(config.obs, self.emit)
         self.tasks: set[asyncio.Task[Any]] = set()
         self.remix_process_id: int | None = None
         self.target_display_bounds = _target_display_bounds()
@@ -192,9 +194,23 @@ class CommandDeckService:
                         {"ok": False, "message": str(error)},
                         request_id,
                     )
-            else:
+            elif service == "twitch":
                 await self.twitch.start()
                 await self.emit("command.result", {"ok": True}, request_id)
+            elif service == "obs":
+                await self.obs.reconnect()
+                await self.emit("command.result", {"ok": True}, request_id)
+            else:
+                raise ValueError(f"Unknown service: {service}")
+        elif command_type == "obs.scene.set":
+            scene_name = payload.get("sceneName")
+            if not isinstance(scene_name, str):
+                raise ValueError("obs.scene.set requires payload.sceneName.")
+            await self.obs.set_scene(scene_name)
+            await self.emit("command.result", {"ok": True}, request_id)
+        elif command_type == "obs.music.stop":
+            await self.obs.stop_music()
+            await self.emit("command.result", {"ok": True}, request_id)
         elif command_type == "backend.shutdown":
             await self.emit("command.result", {"ok": True}, request_id)
             self.shutdown_event.set()
@@ -236,6 +252,7 @@ class CommandDeckService:
         self.tasks.add(remix_probe)
         remix_probe.add_done_callback(self.tasks.discard)
         await self.twitch.start()
+        await self.obs.start()
 
     async def _probe_remix(self) -> None:
         attempts = 1 if self.mock_remix else 30
@@ -308,6 +325,7 @@ class CommandDeckService:
             with contextlib.suppress(asyncio.CancelledError):
                 await task
         await self.twitch.close()
+        await self.obs.close()
         await self.remix.close()
 
 

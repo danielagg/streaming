@@ -3,6 +3,7 @@ import type {
   BackendEvent,
   BerryActionId,
   ChatMessage as WireChatMessage,
+  ObsState,
   RendererConfig,
   ServiceStatus,
   SoundEffect,
@@ -23,9 +24,13 @@ export interface DeckBridge {
   subscribeChat(listener: (message: ChatMessage) => void): () => void;
   subscribeStatus(listener: (status: Partial<DeckStatus>) => void): () => void;
   subscribeActions(listener: (event: BerryActionState) => void): () => void;
+  getObsState(): Promise<ObsState>;
+  setObsScene(sceneName: string): Promise<void>;
+  stopObsMusic(): Promise<void>;
+  subscribeObsState(listener: (state: ObsState) => void): () => void;
 }
 
-const INITIAL_STATUS: DeckStatus = { backend: 'connecting', twitch: 'connecting', remix: 'connecting' };
+const INITIAL_STATUS: DeckStatus = { backend: 'connecting', twitch: 'connecting', remix: 'connecting', obs: 'connecting' };
 
 const DEMO_ALERT_RULES = Object.values(
   import.meta.glob<AlertRuleDefinition>("../../alerts/*.json", {
@@ -44,6 +49,16 @@ const FALLBACK_CONFIG: RendererConfig = {
     { id: 'fly', number: '03', name: 'Fly', description: 'Send Berry after a passing snack', durationMs: 4_000, accent: '#b8a3ed' },
   ],
   alertRules: DEMO_ALERT_RULES,
+  obs: {
+    enabled: true,
+    scenes: [
+      { id: 'main', name: 'Main (screen share)', label: 'Main', accent: '#58aeb5' },
+      { id: 'starting-soon', name: 'Starting Soon', label: 'Starting Soon', accent: '#d5a653' },
+      { id: 'brb', name: 'BRB', label: 'BRB', accent: '#d96d91' },
+    ],
+    musicTailMs: 30_000,
+    musicFadeMs: 5_000,
+  },
 };
 
 const DEMO_CHAT: Array<Omit<ChatMessage, 'id' | 'timestamp'>> = [
@@ -83,16 +98,31 @@ function chatMessage(message: WireChatMessage): ChatMessage {
 
 function createLiveBridge(): DeckBridge {
   const api = window.commandDeck;
+  let obsState: ObsState = {
+    currentScene: null,
+    musicTail: { state: 'idle', remainingMs: 0 },
+  };
   const subscribers = {
     chat: new Set<(message: ChatMessage) => void>(),
     status: new Set<(status: Partial<DeckStatus>) => void>(),
     actions: new Set<(state: BerryActionState) => void>(),
+    obs: new Set<(state: ObsState) => void>(),
   };
 
   const unsubscribe = api.onBackendEvent((event: BackendEvent) => {
     if (event.type === 'backend.ready') return;
     if (event.type === 'command.result') return;
     if (event.type === 'remix.preview.ready') return;
+    if (event.type === 'obs.scene.changed') {
+      obsState = { ...obsState, currentScene: event.payload.sceneName };
+      subscribers.obs.forEach((listener) => listener(obsState));
+      return;
+    }
+    if (event.type === 'obs.music.tail') {
+      obsState = { ...obsState, musicTail: event.payload };
+      subscribers.obs.forEach((listener) => listener(obsState));
+      return;
+    }
     if (event.type === 'chat.message') {
       const message = chatMessage(event.payload);
       subscribers.chat.forEach((listener) => listener(message));
@@ -137,6 +167,13 @@ function createLiveBridge(): DeckBridge {
     subscribeChat: (listener) => add(subscribers.chat, listener),
     subscribeStatus: (listener) => add(subscribers.status, listener),
     subscribeActions: (listener) => add(subscribers.actions, listener),
+    async getObsState() {
+      obsState = await api.getObsState();
+      return obsState;
+    },
+    setObsScene: (sceneName) => api.setObsScene(sceneName),
+    stopObsMusic: () => api.stopObsMusic(),
+    subscribeObsState: (listener) => add(subscribers.obs, listener),
   };
 }
 
@@ -145,7 +182,7 @@ function createDemoBridge(): DeckBridge {
   return {
     mode: 'demo',
     async getConfig() { return FALLBACK_CONFIG; },
-    async getInitialStatus() { return { backend: 'connected', twitch: 'connected', remix: 'connected' }; },
+    async getInitialStatus() { return { backend: 'connected', twitch: 'connected', remix: 'connected', obs: 'connected' }; },
     async triggerAction(action) {
       await new Promise((resolve) => window.setTimeout(resolve, 120));
       actionSubscribers.forEach((listener) =>
@@ -176,6 +213,15 @@ function createDemoBridge(): DeckBridge {
       actionSubscribers.add(listener);
       return () => { actionSubscribers.delete(listener); };
     },
+    async getObsState() {
+      return {
+        currentScene: 'Main (screen share)',
+        musicTail: { state: 'idle', remainingMs: 0 },
+      };
+    },
+    async setObsScene() { return undefined; },
+    async stopObsMusic() { return undefined; },
+    subscribeObsState() { return () => undefined; },
   };
 }
 

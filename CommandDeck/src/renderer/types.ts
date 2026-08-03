@@ -19,6 +19,7 @@ export interface DeckStatus {
   backend: ConnectionState;
   twitch: ConnectionState;
   remix: ConnectionState;
+  obs: ConnectionState;
 }
 
 export interface BerryActionState {

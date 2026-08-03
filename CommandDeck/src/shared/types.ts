@@ -1,6 +1,6 @@
 export type ConnectionState = "offline" | "connecting" | "online" | "error";
 
-export type ServiceName = "backend" | "remix" | "twitch";
+export type ServiceName = "backend" | "remix" | "twitch" | "obs";
 
 export interface ServiceStatus {
   service: ServiceName;
@@ -66,12 +66,39 @@ export interface AlertRuleDefinition {
   };
 }
 
+export interface ObsSceneDefinition {
+  id: string;
+  name: string;
+  label: string;
+  accent: string;
+}
+
+export type ObsMusicTailPhase = "idle" | "playing" | "fading";
+
+export interface ObsMusicTailState {
+  state: ObsMusicTailPhase;
+  remainingMs: number;
+}
+
+export interface ObsState {
+  currentScene: string | null;
+  musicTail: ObsMusicTailState;
+}
+
+export interface ObsRendererConfig {
+  enabled: boolean;
+  scenes: ObsSceneDefinition[];
+  musicTailMs: number;
+  musicFadeMs: number;
+}
+
 export interface RendererConfig {
   appName: "Command Deck";
   twitchChannel: string;
   twitchPlayerParent: string;
   actions: BerryActionDefinition[];
   alertRules: AlertRuleDefinition[];
+  obs: ObsRendererConfig;
 }
 
 export interface SoundEffect {
@@ -95,6 +122,8 @@ export type BackendEvent =
     }
   | { type: "service.status"; payload: ServiceStatus }
   | { type: "remix.preview.ready"; payload: Record<string, never> }
+  | { type: "obs.scene.changed"; payload: { sceneName: string } }
+  | { type: "obs.music.tail"; payload: ObsMusicTailState }
   | { type: "chat.message"; payload: ChatMessage }
   | {
       type: "berry.action.progress";
@@ -118,6 +147,9 @@ export interface CommandDeckAPI {
   getSoundEffects(): Promise<SoundEffect[]>;
   getSoundEffectAudio(id: string): Promise<ArrayBuffer>;
   setSoundEffectOrder(order: string[]): Promise<SoundEffect[]>;
+  getObsState(): Promise<ObsState>;
+  setObsScene(sceneName: string): Promise<void>;
+  stopObsMusic(): Promise<void>;
   onSoundEffectsChanged(listener: (effects: SoundEffect[]) => void): () => void;
   onBackendEvent(listener: (event: BackendEvent) => void): () => void;
 }
