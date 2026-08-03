@@ -27,6 +27,7 @@ export interface DeckBridge {
   getObsState(): Promise<ObsState>;
   setObsScene(sceneName: string): Promise<void>;
   stopObsMusic(): Promise<void>;
+  subscribeTwitchAuth(listener: () => void): () => void;
   subscribeObsState(listener: (state: ObsState) => void): () => void;
 }
 
@@ -173,6 +174,7 @@ function createLiveBridge(): DeckBridge {
     },
     setObsScene: (sceneName) => api.setObsScene(sceneName),
     stopObsMusic: () => api.stopObsMusic(),
+    subscribeTwitchAuth: (listener) => api.onTwitchAuthWindowClosed(listener),
     subscribeObsState: (listener) => add(subscribers.obs, listener),
   };
 }
@@ -221,6 +223,7 @@ function createDemoBridge(): DeckBridge {
     },
     async setObsScene() { return undefined; },
     async stopObsMusic() { return undefined; },
+    subscribeTwitchAuth() { return () => undefined; },
     subscribeObsState() { return () => undefined; },
   };
 }

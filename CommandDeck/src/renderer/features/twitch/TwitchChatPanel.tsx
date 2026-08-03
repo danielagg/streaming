@@ -5,7 +5,7 @@ import { DeckPanel } from "@/components/deck/DeckPanel";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import type { RendererConfig } from "@/bridge";
+import { deckBridge, type RendererConfig } from "@/bridge";
 import { LoadingOverlay } from "./LoadingOverlay";
 
 export function TwitchChatPanel({
@@ -15,6 +15,7 @@ export function TwitchChatPanel({
 }) {
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [authRefresh, setAuthRefresh] = useState(0);
   const src = useMemo(() => {
     const channel = config?.twitchChannel.trim();
     if (!channel) return "";
@@ -27,6 +28,14 @@ export function TwitchChatPanel({
   const chatExpanded = expanded && Boolean(src);
 
   useEffect(() => setLoaded(false), [src]);
+  useEffect(
+    () =>
+      deckBridge.subscribeTwitchAuth(() => {
+        setLoaded(false);
+        setAuthRefresh((value) => value + 1);
+      }),
+    [],
+  );
   useEffect(() => {
     if (!chatExpanded) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -78,6 +87,7 @@ export function TwitchChatPanel({
         {src && !loaded && <LoadingOverlay>Connecting to chat</LoadingOverlay>}
         {src && (
           <iframe
+            key={`${src}:${authRefresh}`}
             className="absolute inset-0 z-10 size-full border-0"
             src={src}
             title={`${config?.twitchChannel ?? ""} Twitch chat`}

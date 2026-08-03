@@ -150,6 +150,7 @@ export interface CommandDeckAPI {
   getObsState(): Promise<ObsState>;
   setObsScene(sceneName: string): Promise<void>;
   stopObsMusic(): Promise<void>;
+  onTwitchAuthWindowClosed(listener: () => void): () => void;
   onSoundEffectsChanged(listener: (effects: SoundEffect[]) => void): () => void;
   onBackendEvent(listener: (event: BackendEvent) => void): () => void;
 }

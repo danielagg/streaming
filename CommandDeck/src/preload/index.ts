@@ -36,6 +36,15 @@ const api: CommandDeckAPI = Object.freeze({
     ipcRenderer.invoke("command-deck:set-obs-scene", sceneName) as Promise<void>,
   stopObsMusic: () =>
     ipcRenderer.invoke("command-deck:stop-obs-music") as Promise<void>,
+  onTwitchAuthWindowClosed: (listener: () => void) => {
+    const handler = () => listener();
+    ipcRenderer.on("command-deck:twitch-auth-window-closed", handler);
+    return () =>
+      ipcRenderer.removeListener(
+        "command-deck:twitch-auth-window-closed",
+        handler,
+      );
+  },
   onSoundEffectsChanged: (listener: (effects: SoundEffect[]) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, effects: SoundEffect[]) =>
       listener(effects);

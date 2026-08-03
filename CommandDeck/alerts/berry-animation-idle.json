@@ -4,7 +4,7 @@
   "severity": "warning",
   "trigger": {
     "type": "inactivity",
-    "durationMs": 240000,
+    "durationMs": 100000,
     "event": {
       "type": "berry.action.triggered"
     }

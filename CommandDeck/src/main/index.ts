@@ -24,6 +24,7 @@ import { loadRendererConfig } from "./runtimeConfig";
 import { chooseDisplay, rememberDisplay } from "./settings";
 import { SoundEffectsLibrary } from "./soundEffects";
 import { startRendererServer, type RendererServer } from "./staticServer";
+import { isExternalHttpsUrl, isTwitchOwnedUrl } from "./windowPolicy";
 
 const backend = new BackendClient();
 const rendererConfig: RendererConfig = loadRendererConfig();
@@ -89,8 +90,51 @@ function createWindow(rendererUrl: string): Display {
   });
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("https://")) void shell.openExternal(url);
+    if (isTwitchOwnedUrl(url)) {
+      return {
+        action: "allow",
+        overrideBrowserWindowOptions: {
+          parent: mainWindow,
+          width: 520,
+          height: 760,
+          minWidth: 400,
+          minHeight: 600,
+          autoHideMenuBar: true,
+          backgroundColor: "#0e0e10",
+          title: "Sign in to Twitch",
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            webSecurity: true,
+          },
+        },
+      };
+    }
+    if (isExternalHttpsUrl(url)) void shell.openExternal(url);
     return { action: "deny" };
+  });
+  mainWindow.webContents.on("did-create-window", (authWindow, details) => {
+    if (!isTwitchOwnedUrl(details.url)) {
+      authWindow.close();
+      return;
+    }
+    authWindow.setMenuBarVisibility(false);
+    authWindow.webContents.setWindowOpenHandler(({ url }) => {
+      if (isTwitchOwnedUrl(url)) return { action: "allow" };
+      if (isExternalHttpsUrl(url)) void shell.openExternal(url);
+      return { action: "deny" };
+    });
+    authWindow.webContents.on("will-navigate", (event, url) => {
+      if (isTwitchOwnedUrl(url)) return;
+      event.preventDefault();
+      if (isExternalHttpsUrl(url)) void shell.openExternal(url);
+    });
+    authWindow.on("closed", () => {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send("command-deck:twitch-auth-window-closed");
+      }
+    });
   });
   mainWindow.webContents.on("will-navigate", (event, url) => {
     if (new URL(url).origin !== new URL(rendererUrl).origin) {
