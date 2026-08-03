@@ -4,7 +4,6 @@ import type { RendererConfig } from "@/bridge";
 import type { BerryAction, BerryActionState, ConnectionState } from "@/types";
 import { ActionButton } from "./ActionButton";
 import { DEFAULT_ACTIONS, resolveActionDefinition } from "./actionDefinitions";
-import { RemixStatusBadge } from "./RemixStatusBadge";
 
 type BerryControlsPanelProps = {
   config: RendererConfig | null;
@@ -40,11 +39,11 @@ export function BerryControlsPanel({
 
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-[260px] md:col-start-1 md:col-end-8 md:row-start-3 md:min-h-0"
+      className="col-span-1 row-auto min-h-[260px] md:col-start-1 md:col-end-8 md:row-start-4 md:min-h-0"
       role="region"
       aria-labelledby="berry-actions-title"
     >
-      <CardHeader className="flex h-[46px] shrink-0 grid-cols-none flex-row items-center justify-between border-b bg-[#101518] px-3">
+      <CardHeader className="flex h-[46px] shrink-0 grid-cols-none flex-row items-center border-b bg-[#101518] px-3">
         <div>
           <CardTitle
             id="berry-actions-title"
@@ -53,7 +52,6 @@ export function BerryControlsPanel({
             Berry controls
           </CardTitle>
         </div>
-        <RemixStatusBadge state={effectiveRemixStatus} />
       </CardHeader>
       <CardContent className="grid min-h-0 flex-1 auto-rows-[88px] grid-cols-[repeat(auto-fill,78px)] content-start gap-3 bg-[#0b0e10] p-3.5">
         {configuredActions.map((configured) => {

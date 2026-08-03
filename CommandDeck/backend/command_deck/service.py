@@ -293,13 +293,17 @@ class CommandDeckService:
                     {"service": "remix", "state": "offline", "detail": str(error)},
                     None,
                 )
-        remix_probe = asyncio.create_task(self._probe_remix())
-        self.tasks.add(remix_probe)
-        remix_probe.add_done_callback(self.tasks.discard)
+        remix_watch = asyncio.create_task(self._watch_remix())
+        self.tasks.add(remix_watch)
+        remix_watch.add_done_callback(self.tasks.discard)
         await self.twitch.start()
         await self.obs.start()
 
-    async def _probe_remix(self) -> None:
+    async def _watch_remix(self) -> None:
+        online = await self._probe_remix()
+        await self._monitor_remix(initial_state="online" if online else "offline")
+
+    async def _probe_remix(self) -> bool:
         attempts = 1 if self.mock_remix else 30
         last_error: Exception | None = None
         for _attempt in range(attempts):
@@ -319,7 +323,7 @@ class CommandDeckService:
                     },
                     None,
                 )
-                return
+                return True
             except Exception as error:  # noqa: BLE001 - startup probe is resilient
                 last_error = error
                 if attempts > 1:
@@ -333,6 +337,50 @@ class CommandDeckService:
             },
             None,
         )
+        return False
+
+    async def _monitor_remix(
+        self,
+        *,
+        initial_state: str,
+        poll_interval: float = 2.0,
+        retry_interval: float = 1.0,
+        offline_after: int = 3,
+    ) -> None:
+        state = initial_state
+        failures = 0
+        while True:
+            await asyncio.sleep(poll_interval if failures == 0 else retry_interval)
+            try:
+                states = await self.remix.list_states()
+            except Exception as error:  # noqa: BLE001 - monitor reports outages
+                failures += 1
+                next_state = "offline" if failures >= offline_after else "connecting"
+                if next_state != state:
+                    await self.emit(
+                        "service.status",
+                        {
+                            "service": "remix",
+                            "state": next_state,
+                            "detail": str(error),
+                        },
+                        None,
+                    )
+                    state = next_state
+                continue
+
+            failures = 0
+            if state != "online":
+                await self.emit(
+                    "service.status",
+                    {
+                        "service": "remix",
+                        "state": "online",
+                        "detail": f"{len(states)} states available",
+                    },
+                    None,
+                )
+                state = "online"
 
     async def _ensure_preview_mode(self) -> bool:
         if (

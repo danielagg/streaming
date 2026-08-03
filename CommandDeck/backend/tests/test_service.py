@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import replace
 
 import pytest
@@ -147,6 +148,49 @@ async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path)
     assert remix_closed == 1
     assert state_list_calls == 2
     assert "remix.preview.ready" in events
+
+
+@pytest.mark.asyncio
+async def test_remix_monitor_reports_disconnect_and_recovery():
+    service = CommandDeckService(default_config(), mock_remix=True)
+    events: list[dict[str, object]] = []
+    outcomes = iter(
+        [
+            RuntimeError("connection lost"),
+            RuntimeError("connection refused"),
+            RuntimeError("connection refused"),
+            [{"name": "Idle"}],
+        ]
+    )
+
+    async def capture(event_type, payload, _request_id=None):
+        if event_type == "service.status":
+            events.append(payload)
+
+    async def list_states():
+        try:
+            outcome = next(outcomes)
+        except StopIteration:
+            raise asyncio.CancelledError from None
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+    service.emit = capture
+    service.remix.list_states = list_states
+
+    with pytest.raises(asyncio.CancelledError):
+        await service._monitor_remix(
+            initial_state="online",
+            poll_interval=0,
+            retry_interval=0,
+        )
+
+    assert [(event["state"], event["detail"]) for event in events] == [
+        ("connecting", "connection lost"),
+        ("offline", "connection refused"),
+        ("online", "1 states available"),
+    ]
 
 
 @pytest.mark.asyncio

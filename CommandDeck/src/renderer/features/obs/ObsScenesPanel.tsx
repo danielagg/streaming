@@ -12,7 +12,6 @@ import {
 
 import { deckBridge, type RendererConfig } from "@/bridge";
 import { DeckPanel } from "@/components/deck/DeckPanel";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -110,27 +109,14 @@ export function ObsScenesPanel({
 
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-[240px] md:col-span-12 md:row-start-5 md:min-h-0"
+      className="col-span-1 row-auto min-h-[240px] md:col-span-12 md:row-start-6 md:min-h-0"
       role="region"
       aria-labelledby="obs-scenes-title"
     >
-      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center justify-between border-b bg-[#101518] px-3">
+      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center border-b bg-[#101518] px-3">
         <CardTitle id="obs-scenes-title" className="text-sm text-[#e4e9e9]">
           OBS scenes
         </CardTitle>
-        <Badge
-          variant="outline"
-          className={cn(
-            "h-5 rounded-none px-2 font-mono text-[8px] font-bold uppercase tracking-[.08em]",
-            connected
-              ? "border-[#3f7661] bg-[#102019] text-[#8dd5a9]"
-              : status === "connecting"
-                ? "border-[#796738] bg-[#211d11] text-[#ddc477]"
-                : "border-[#704946] bg-[#211413] text-[#d9928c]",
-          )}
-        >
-          {connected ? "OBS connected" : status === "connecting" ? "Connecting" : "OBS offline"}
-        </Badge>
       </CardHeader>
       <CardContent className="flex min-h-0 flex-1 flex-col gap-2 bg-[#0b0e10] p-2">
         {error && (
