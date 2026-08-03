@@ -24,6 +24,7 @@ def select_preview_mode(
     ui_scale: float = 1.0,
     timeout_seconds: float = 5.0,
     target_bounds: tuple[int, int, int, int] | None = None,
+    attempts: int = 3,
 ) -> None:
     if sys.platform != "win32":
         raise RemixWindowControlError(
@@ -37,17 +38,28 @@ def select_preview_mode(
         raise RemixWindowControlError(
             f"Remix reported an unsupported UI scale: {ui_scale:g}."
         )
+    if not 1 <= attempts <= 5:
+        raise RemixWindowControlError(
+            f"Remix preview selection needs 1 to 5 attempts, got {attempts}."
+        )
 
     window = _wait_for_main_window(process_id, timeout_seconds)
     if target_bounds is not None:
         _move_to_display(window, target_bounds)
+        # Give Godot a frame to finish its monitor/DPI transition before
+        # addressing controls in client coordinates.
+        time.sleep(0.25)
     mode_x, mode_y = _scaled_point(MODE_BUTTON, ui_scale)
     preview_x, preview_y = _scaled_point(PREVIEW_MENU_ITEM, ui_scale)
 
-    _post_click(window, mode_x, mode_y)
-    time.sleep(0.25)
-    _post_click(window, preview_x, preview_y)
-    time.sleep(0.35)
+    # Selecting Preview again is harmless. Repeating the sequence makes
+    # startup resilient when the first popup click lands while Remix is still
+    # completing its initial layout.
+    for _attempt in range(attempts):
+        _post_click(window, mode_x, mode_y)
+        time.sleep(0.3)
+        _post_click(window, preview_x, preview_y)
+        time.sleep(0.35)
 
 
 def _scaled_point(point: tuple[int, int], scale: float) -> tuple[int, int]:

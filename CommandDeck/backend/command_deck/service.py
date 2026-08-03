@@ -44,6 +44,13 @@ class CommandDeckService:
         self.token = token
         self.mock_remix = mock_remix
         self.clients: set[web.WebSocketResponse] = set()
+        self._event_lock = asyncio.Lock()
+        self.service_statuses: dict[str, dict[str, Any]] = {}
+        self.obs_scene_name: str | None = None
+        self.obs_music_tail: dict[str, Any] = {
+            "state": "idle",
+            "remainingMs": 0,
+        }
         self.shutdown_event = asyncio.Event()
         self.remix = (
             MockRemixClient([action.state_name for action in config.actions])
@@ -64,6 +71,25 @@ class CommandDeckService:
     async def emit(
         self, event_type: str, payload: dict[str, Any], request_id: str | None = None
     ) -> None:
+        async with self._event_lock:
+            self._remember_event(event_type, payload)
+            await self._broadcast(event_type, payload, request_id)
+
+    def _remember_event(self, event_type: str, payload: dict[str, Any]) -> None:
+        if event_type == "service.status":
+            service = payload.get("service")
+            if isinstance(service, str):
+                self.service_statuses[service] = payload.copy()
+        elif event_type == "obs.scene.changed":
+            scene_name = payload.get("sceneName")
+            if isinstance(scene_name, str):
+                self.obs_scene_name = scene_name
+        elif event_type == "obs.music.tail":
+            self.obs_music_tail = payload.copy()
+
+    async def _broadcast(
+        self, event_type: str, payload: dict[str, Any], request_id: str | None
+    ) -> None:
         message: dict[str, Any] = {
             "version": PROTOCOL_VERSION,
             "type": event_type,
@@ -78,6 +104,15 @@ class CommandDeckService:
             except Exception:  # noqa: BLE001 - stale clients are removed
                 dead.append(socket)
         self.clients.difference_update(dead)
+
+    async def _send_cached_state(self, socket: web.WebSocketResponse) -> None:
+        for status in self.service_statuses.values():
+            await socket.send_json(self.event("service.status", status))
+        if self.obs_scene_name is not None:
+            await socket.send_json(
+                self.event("obs.scene.changed", {"sceneName": self.obs_scene_name})
+            )
+        await socket.send_json(self.event("obs.music.tail", self.obs_music_tail))
 
     async def health(self, _request: web.Request) -> web.Response:
         return web.json_response(
@@ -97,21 +132,30 @@ class CommandDeckService:
             raise web.HTTPUnauthorized()
         socket = web.WebSocketResponse(heartbeat=20)
         await socket.prepare(request)
-        self.clients.add(socket)
-        await socket.send_json(
-            {
-                "version": 1,
-                "type": "backend.ready",
-                "payload": {
-                    "name": "Command Deck",
-                    "protocolVersion": 1,
-                    "actions": [
-                        {"id": a.id, "name": a.name, "durationMs": a.duration_ms}
-                        for a in self.config.actions
-                    ],
-                },
-            }
-        )
+        # Service startup can finish before Electron attaches (especially when
+        # OBS is already running). Serialize the snapshot and client attach
+        # with live emissions so no state can be lost between them.
+        async with self._event_lock:
+            await socket.send_json(
+                {
+                    "version": 1,
+                    "type": "backend.ready",
+                    "payload": {
+                        "name": "Command Deck",
+                        "protocolVersion": 1,
+                        "actions": [
+                            {
+                                "id": a.id,
+                                "name": a.name,
+                                "durationMs": a.duration_ms,
+                            }
+                            for a in self.config.actions
+                        ],
+                    },
+                }
+            )
+            await self._send_cached_state(socket)
+            self.clients.add(socket)
         try:
             async for message in socket:
                 if message.type == WSMsgType.TEXT:
@@ -131,7 +175,8 @@ class CommandDeckService:
                             )
                         )
         finally:
-            self.clients.discard(socket)
+            async with self._event_lock:
+                self.clients.discard(socket)
         return socket
 
     @staticmethod

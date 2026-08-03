@@ -6,6 +6,14 @@ from command_deck.config import default_config
 from command_deck.service import CommandDeckService
 
 
+class FakeSocket:
+    def __init__(self):
+        self.messages = []
+
+    async def send_json(self, message):
+        self.messages.append(message)
+
+
 @pytest.mark.asyncio
 async def test_trigger_command_acknowledges_and_completes(monkeypatch):
     config = default_config()
@@ -56,6 +64,28 @@ async def test_ping_acknowledges_command_channel():
     )
 
     assert messages == [("command.result", {"ok": True}, "ping-1")]
+
+
+@pytest.mark.asyncio
+async def test_cached_service_and_obs_state_is_replayed_to_late_client():
+    service = CommandDeckService(default_config(), mock_remix=True)
+    await service.emit(
+        "service.status",
+        {"service": "obs", "state": "online", "detail": "3 scenes available"},
+    )
+    await service.emit("obs.scene.changed", {"sceneName": "BRB"})
+    socket = FakeSocket()
+
+    await service._send_cached_state(socket)
+
+    assert socket.messages == [
+        service.event(
+            "service.status",
+            {"service": "obs", "state": "online", "detail": "3 scenes available"},
+        ),
+        service.event("obs.scene.changed", {"sceneName": "BRB"}),
+        service.event("obs.music.tail", {"state": "idle", "remainingMs": 0}),
+    ]
 
 
 @pytest.mark.asyncio
