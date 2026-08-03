@@ -49,6 +49,8 @@ def test_loads_obs_scene_and_music_configuration(tmp_path, monkeypatch):
                 ],
                 "obs": {
                     "enabled": True,
+                    "autoLaunch": True,
+                    "executablePath": "OBS Studio/bin/64bit/obs64.exe",
                     "scenes": [
                         {"id": "main", "name": "Main (screen share)", "label": "Main"}
                     ],
@@ -64,6 +66,10 @@ def test_loads_obs_scene_and_music_configuration(tmp_path, monkeypatch):
     config = load_config(path)
 
     assert config.obs.enabled is True
+    assert config.obs.auto_launch is True
+    assert config.obs.executable_path == (
+        tmp_path / "OBS Studio/bin/64bit/obs64.exe"
+    ).resolve()
     assert config.obs.password == "local-secret"
     assert config.obs.scenes[0].name == "Main (screen share)"
     assert config.obs.music_input == "StartingSoon Music"

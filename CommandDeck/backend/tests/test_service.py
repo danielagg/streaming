@@ -90,6 +90,54 @@ async def test_cached_service_and_obs_state_is_replayed_to_late_client():
 
 
 @pytest.mark.asyncio
+async def test_start_launches_obs_before_starting_its_connection(monkeypatch):
+    config = default_config()
+    config = replace(
+        config,
+        obs=replace(config.obs, enabled=True, auto_launch=True),
+    )
+    service = CommandDeckService(config, mock_remix=True)
+    calls = []
+
+    class Process:
+        pid = 73
+
+    async def capture(event_type, payload, _request_id=None):
+        calls.append((event_type, payload))
+
+    async def watch_remix():
+        return None
+
+    async def start_twitch():
+        calls.append(("twitch.start", {}))
+
+    async def start_obs():
+        calls.append(("obs.start", {}))
+
+    service.emit = capture
+    service._watch_remix = watch_remix
+    service.twitch.start = start_twitch
+    service.obs.start = start_obs
+    monkeypatch.setattr("command_deck.service.launch_obs", lambda _config: Process())
+
+    await service.start()
+    await asyncio.gather(*service.tasks)
+
+    assert calls == [
+        (
+            "service.status",
+            {
+                "service": "obs",
+                "state": "connecting",
+                "detail": "Launching process 73",
+            },
+        ),
+        ("twitch.start", {}),
+        ("obs.start", {}),
+    ]
+
+
+@pytest.mark.asyncio
 async def test_probe_selects_preview_after_remix_is_ready(monkeypatch, tmp_path):
     monkeypatch.setenv("COMMAND_DECK_ELECTRON_PID", "314")
     monkeypatch.setenv("COMMAND_DECK_DISPLAY_X", "1920")

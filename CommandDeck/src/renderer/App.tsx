@@ -22,7 +22,7 @@ export function App() {
 
   return (
     <main className="min-h-screen w-full">
-      <div className="grid min-h-screen grid-cols-1 grid-rows-[auto] gap-1 bg-[#050708] p-1 md:grid-cols-12 md:grid-rows-[auto_64px_48px_minmax(390px,.95fr)_minmax(260px,.8fr)_minmax(240px,.72fr)]">
+      <div className="grid min-h-screen grid-cols-1 grid-rows-[auto] gap-1 bg-[#050708] p-1 md:grid-cols-12 md:grid-rows-[auto_64px_48px_minmax(390px,.95fr)_fit-content(260px)_minmax(240px,.72fr)]">
         <TwitchStreamPanel config={config} />
         <AlertPanel alerts={alerts} onDismiss={dismissAlert} />
         <ServiceStatusPanel

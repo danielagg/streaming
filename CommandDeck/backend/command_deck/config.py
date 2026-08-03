@@ -39,6 +39,8 @@ class ObsSceneDefinition:
 class ObsConfig:
     enabled: bool = False
     websocket_url: str = "ws://127.0.0.1:4455"
+    auto_launch: bool = False
+    executable_path: Path | None = None
     password: str | None = None
     scenes: tuple[ObsSceneDefinition, ...] = ()
     starting_soon_scene: str = "Starting Soon"
@@ -166,6 +168,8 @@ def load_config(path: Path | None) -> AppConfig:
     obs = ObsConfig(
         enabled=bool(obs_raw.get("enabled", False)),
         websocket_url=str(obs_raw.get("websocketUrl", "ws://127.0.0.1:4455")),
+        auto_launch=bool(obs_raw.get("autoLaunch", False)),
+        executable_path=_path(base, obs_raw.get("executablePath")),
         password=str(password) if password else None,
         scenes=obs_scenes,
         starting_soon_scene=str(

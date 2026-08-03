@@ -46,6 +46,10 @@ launching Command Deck. The local password file is never packaged or committed.
 OBS scene names, the music input name, and the tail/fade durations are configured
 in the `obs` section of `config.json`. `StartingSoon Music` must be the same OBS
 Media Source reference in both `Starting Soon` and `Main (screen share)`.
+Command Deck launches OBS automatically when `obs.autoLaunch` is enabled. The
+configured `obs.executablePath` currently points to the standard 64-bit Windows
+installation at `C:/Program Files/obs-studio/bin/64bit/obs64.exe`; update it if
+OBS moves.
 
 Sound effects are discovered from `../Audio/Manual` during local development.
 Add or remove MP3 files there while Command Deck is open and the panel updates

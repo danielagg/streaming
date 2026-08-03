@@ -12,7 +12,7 @@ from .controller import ActionController
 from .obs import ObsService
 from .remix import MockRemixClient, RemixClient
 from .remix_window import select_preview_mode
-from .startup import launch_remix, read_float32
+from .startup import launch_obs, launch_remix, read_float32
 from .twitch import TwitchChatService
 from .window_focus import focus_process_window
 
@@ -273,6 +273,24 @@ class CommandDeckService:
             )
 
     async def start(self) -> None:
+        try:
+            process = launch_obs(self.config)
+            if process:
+                await self.emit(
+                    "service.status",
+                    {
+                        "service": "obs",
+                        "state": "connecting",
+                        "detail": f"Launching process {process.pid}",
+                    },
+                    None,
+                )
+        except Exception as error:  # noqa: BLE001 - startup remains offline-friendly
+            await self.emit(
+                "service.status",
+                {"service": "obs", "state": "offline", "detail": str(error)},
+                None,
+            )
         if not self.mock_remix:
             try:
                 process = launch_remix(self.config)

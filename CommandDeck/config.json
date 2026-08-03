@@ -10,6 +10,8 @@
   },
   "obs": {
     "enabled": true,
+    "autoLaunch": true,
+    "executablePath": "C:/Program Files/obs-studio/bin/64bit/obs64.exe",
     "websocketUrl": "ws://127.0.0.1:4455",
     "scenes": [
       {

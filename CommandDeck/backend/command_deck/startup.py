@@ -91,3 +91,18 @@ def launch_remix(config: AppConfig) -> subprocess.Popen[bytes] | None:
         close_fds=True,
         creationflags=flags,
     )
+
+
+def launch_obs(config: AppConfig) -> subprocess.Popen[bytes] | None:
+    if not config.obs.enabled or not config.obs.auto_launch:
+        return None
+    executable = config.obs.executable_path
+    if executable is None or not executable.is_file():
+        raise FileNotFoundError(f"OBS Studio was not found: {executable}")
+    flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    return subprocess.Popen(
+        [str(executable)],
+        cwd=executable.parent,
+        close_fds=True,
+        creationflags=flags,
+    )
