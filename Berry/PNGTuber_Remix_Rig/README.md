@@ -140,8 +140,10 @@ WebSocket connection to Remix and handles the one-shot animations:
 - Triple-tap `F15`: Fly Catch for 1.4 seconds
 - Triple-tap `F16`: Angry Tremble for 1.4 seconds
 - Triple-tap `F17`: Embarrassed Sway for 2.1 seconds
+- Triple-tap `F18`: Surprised Hop for 1.4 seconds
+- Triple-tap `F19`: Understanding Nod for 2.1 seconds
 
 The helper remembers and restores whichever normal state was active. Keep the
-Remix states named exactly `Whiskey Sip`, `Croaking`, `Fly Catch`, `Angry`, and
-`Embarrassed`, start Remix's WebSocket server on port `9321`, and do not also
-bind F13/F14/F15/F16/F17 inside Remix.
+Remix states named exactly `Whiskey Sip`, `Croaking`, `Fly Catch`, `Angry`,
+`Embarrassed`, `Surprised`, and `Understanding`, start Remix's WebSocket server
+on port `9321`, and do not also bind F13/F14/F15/F16/F17/F18/F19 inside Remix.

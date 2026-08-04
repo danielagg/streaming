@@ -12,6 +12,8 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
   { action: "fly", label: "Fly Catch", icon: "🪰" },
   { action: "angry", label: "Angry", icon: "💢" },
   { action: "embarrassed", label: "Embarrassed", icon: "😳" },
+  { action: "surprised", label: "Surprised", icon: "❗" },
+  { action: "understanding", label: "Understanding", icon: "🤔" },
 ];
 
 export const ACTION_COLORS: Record<
@@ -26,6 +28,16 @@ export const ACTION_COLORS: Record<
     off: "#5c243d",
     on: "#ff6f9f",
     glow: "rgba(255,111,159,.72)",
+  },
+  surprised: {
+    off: "#5f4818",
+    on: "#ffd34f",
+    glow: "rgba(255,211,79,.72)",
+  },
+  understanding: {
+    off: "#213b5a",
+    on: "#7fa8d8",
+    glow: "rgba(127,168,216,.72)",
   },
 };
 

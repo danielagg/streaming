@@ -51,6 +51,8 @@ const FALLBACK_CONFIG: RendererConfig = {
     { id: 'fly', number: '03', name: 'Fly', description: 'Send Berry after a passing snack', durationMs: 4_000, accent: '#b8a3ed' },
     { id: 'angry', number: '04', name: 'Angry', description: 'Let Berry simmer with rage', durationMs: 1_400, accent: '#e05258' },
     { id: 'embarrassed', number: '05', name: 'Embarrassed', description: 'Give Berry a bashful self-conscious sway', durationMs: 2_100, accent: '#e77aa2' },
+    { id: 'surprised', number: '06', name: 'Surprised', description: 'Give Berry a startled hop and comic gasp', durationMs: 1_400, accent: '#f3c94f' },
+    { id: 'understanding', number: '07', name: 'Understanding', description: 'Let Berry think it through and nod', durationMs: 2_100, accent: '#7fa8d8' },
   ],
   alertRules: DEMO_ALERT_RULES,
   obs: {

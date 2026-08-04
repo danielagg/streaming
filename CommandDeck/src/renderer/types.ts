@@ -3,7 +3,9 @@ export type BerryAction =
   | 'croak'
   | 'fly'
   | 'angry'
-  | 'embarrassed';
+  | 'embarrassed'
+  | 'surprised'
+  | 'understanding';
 export type ConnectionState = 'connected' | 'connecting' | 'offline';
 
 export interface ChatAuthor {

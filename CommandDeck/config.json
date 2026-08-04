@@ -98,6 +98,24 @@
       "description": "A bashful blush and self-conscious sway.",
       "durationMs": 2100,
       "accent": "#e77aa2"
+    },
+    {
+      "id": "surprised",
+      "number": "06",
+      "name": "Surprised",
+      "stateName": "Surprised",
+      "description": "A startled hop, comic gasp, and quick landing.",
+      "durationMs": 1400,
+      "accent": "#f3c94f"
+    },
+    {
+      "id": "understanding",
+      "number": "07",
+      "name": "Understanding",
+      "stateName": "Understanding",
+      "description": "A focused thought followed by two confirming nods.",
+      "durationMs": 2100,
+      "accent": "#7fa8d8"
     }
   ]
 }

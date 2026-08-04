@@ -115,6 +115,24 @@ def default_config() -> AppConfig:
                 "A bashful blush and self-conscious sway.",
                 "#E77AA2",
             ),
+            ActionDefinition(
+                "surprised",
+                "Surprised",
+                "Surprised",
+                1400,
+                "06",
+                "A startled hop, comic gasp, and quick landing.",
+                "#F3C94F",
+            ),
+            ActionDefinition(
+                "understanding",
+                "Understanding",
+                "Understanding",
+                2100,
+                "07",
+                "A focused thought followed by two confirming nods.",
+                "#7FA8D8",
+            ),
         ),
     )
 

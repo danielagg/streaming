@@ -4,7 +4,9 @@ param(
     [string]$CroakState = "Croaking",
     [string]$FlyCatchState = "Fly Catch",
     [string]$AngryState = "Angry",
-    [string]$EmbarrassedState = "Embarrassed"
+    [string]$EmbarrassedState = "Embarrassed",
+    [string]$SurprisedState = "Surprised",
+    [string]$UnderstandingState = "Understanding"
 )
 
 $ErrorActionPreference = "Stop"
@@ -127,7 +129,9 @@ try {
         $CroakState,
         $FlyCatchState,
         $AngryState,
-        $EmbarrassedState
+        $EmbarrassedState,
+        $SurprisedState,
+        $UnderstandingState
     )
 
     foreach ($requiredState in $actionStates) {
@@ -159,6 +163,8 @@ try {
         F15 = 0x7E
         F16 = 0x7F
         F17 = 0x80
+        F18 = 0x81
+        F19 = 0x82
     }
     $wasDown = @{}
     foreach ($name in $keys.Keys) {
@@ -176,6 +182,8 @@ try {
     Write-Host "  Triple-tap F15  Fly Catch"
     Write-Host "  Triple-tap F16  Angry"
     Write-Host "  Triple-tap F17  Embarrassed"
+    Write-Host "  Triple-tap F18  Surprised"
+    Write-Host "  Triple-tap F19  Understanding"
     Write-Host ""
     Write-Host "Press Ctrl+C to stop."
     Write-Host ""
@@ -252,6 +260,24 @@ try {
                         Play-Action `
                             -Socket $socket `
                             -StateName $EmbarrassedState `
+                            -ReturnStateName $normalState.name `
+                            -DurationMs 2100 `
+                            -AudioPlayer $null
+                    }
+                    F18 {
+                        Write-Host "Surprised"
+                        Play-Action `
+                            -Socket $socket `
+                            -StateName $SurprisedState `
+                            -ReturnStateName $normalState.name `
+                            -DurationMs 1400 `
+                            -AudioPlayer $null
+                    }
+                    F19 {
+                        Write-Host "Understanding"
+                        Play-Action `
+                            -Socket $socket `
+                            -StateName $UnderstandingState `
                             -ReturnStateName $normalState.name `
                             -DurationMs 2100 `
                             -AudioPlayer $null
