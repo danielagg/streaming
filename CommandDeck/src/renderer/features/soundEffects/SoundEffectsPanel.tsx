@@ -157,7 +157,7 @@ export function SoundEffectsPanel() {
       role="region"
       aria-labelledby="sound-effects-title"
     >
-      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center justify-between border-b bg-[#101518] px-3">
+      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center justify-between border-b border-[#20282c] bg-[#0e1315] px-3">
         <div>
           <CardTitle
             id="sound-effects-title"

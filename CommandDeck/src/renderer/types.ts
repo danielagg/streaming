@@ -5,7 +5,8 @@ export type BerryAction =
   | 'angry'
   | 'embarrassed'
   | 'surprised'
-  | 'understanding';
+  | 'understanding'
+  | 'vaping';
 export type ConnectionState = 'connected' | 'connecting' | 'offline';
 
 export interface ChatAuthor {

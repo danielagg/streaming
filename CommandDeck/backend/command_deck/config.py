@@ -133,6 +133,15 @@ def default_config() -> AppConfig:
                 "A focused thought followed by two confirming nods.",
                 "#7FA8D8",
             ),
+            ActionDefinition(
+                "vaping",
+                "Vaping",
+                "Vaping",
+                4600,
+                "08",
+                "A 1.5-second drag followed by a 3-second exhale.",
+                "#74C7D4",
+            ),
         ),
     )
 

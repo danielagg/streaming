@@ -44,6 +44,7 @@ const ACTION_IDS = new Set<BerryActionId>([
   "embarrassed",
   "surprised",
   "understanding",
+  "vaping",
 ]);
 const ALERT_SEVERITIES = new Set<AlertSeverity>([
   "info",

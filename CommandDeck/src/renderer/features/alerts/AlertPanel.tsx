@@ -11,22 +11,22 @@ type AlertPanelProps = {
 };
 
 const severityStyles: Record<ActiveAlert["severity"], string> = {
-  info: "border-[#4a9198] bg-[#102126] text-[#9de5ea]",
-  warning: "border-[#a67d38] bg-[#251e12] text-[#f0c872]",
-  critical: "border-[#9a4d48] bg-[#271413] text-[#f0a19a]",
+  info: "border-[#4a9198] text-[#9de5ea]",
+  warning: "border-[#a67d38] text-[#f0c872]",
+  critical: "border-[#9a4d48] text-[#f0a19a]",
 };
 
 export function AlertPanel({ alerts, onDismiss }: AlertPanelProps) {
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-16 bg-[#0d1215] md:col-span-12 md:row-start-2"
+      className="col-span-1 row-auto min-h-16 bg-[#090d0f] md:col-span-12 md:row-start-2"
       role="region"
       aria-labelledby="alerts-title"
       aria-live="polite"
     >
-      <div className="flex min-h-[62px] min-w-0 items-stretch">
+      <div className="flex min-h-[62px] min-w-0 items-center">
         {alerts.length === 0 ? (
-          <div className="flex min-w-0 flex-1 items-center gap-2 px-4 text-xs text-muted-foreground">
+          <div className="flex min-w-0 flex-1 items-center gap-2 px-4 text-[11px] text-muted-foreground">
             <CheckCircle2
               aria-hidden="true"
               className="size-4 text-[#719b78]"
@@ -34,12 +34,12 @@ export function AlertPanel({ alerts, onDismiss }: AlertPanelProps) {
             <span>No active alerts</span>
           </div>
         ) : (
-          <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto p-1">
+          <div className="flex min-w-0 flex-1 gap-4 overflow-x-auto px-4 py-2">
             {alerts.map((alert) => (
               <div
                 key={alert.id}
                 className={cn(
-                  "flex min-w-[280px] flex-1 items-center gap-2 border-l-2 px-3",
+                  "flex min-w-[260px] flex-1 items-center gap-2 border-l-2 pl-3",
                   severityStyles[alert.severity],
                 )}
               >

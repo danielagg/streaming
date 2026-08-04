@@ -53,6 +53,7 @@ const FALLBACK_CONFIG: RendererConfig = {
     { id: 'embarrassed', number: '05', name: 'Embarrassed', description: 'Give Berry a bashful self-conscious sway', durationMs: 2_100, accent: '#e77aa2' },
     { id: 'surprised', number: '06', name: 'Surprised', description: 'Give Berry a startled hop and comic gasp', durationMs: 1_400, accent: '#f3c94f' },
     { id: 'understanding', number: '07', name: 'Understanding', description: 'Let Berry think it through and nod', durationMs: 2_100, accent: '#7fa8d8' },
+    { id: 'vaping', number: '08', name: 'Vaping', description: 'Cover a vape break with Berry', durationMs: 4_600, accent: '#74c7d4' },
   ],
   alertRules: DEMO_ALERT_RULES,
   obs: {

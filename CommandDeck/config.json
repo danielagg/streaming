@@ -116,6 +116,15 @@
       "description": "A focused thought followed by two confirming nods.",
       "durationMs": 2100,
       "accent": "#7fa8d8"
+    },
+    {
+      "id": "vaping",
+      "number": "08",
+      "name": "Vaping",
+      "stateName": "Vaping",
+      "description": "A 1.5-second drag followed by a 3-second exhale.",
+      "durationMs": 4600,
+      "accent": "#74c7d4"
     }
   ]
 }

@@ -5,7 +5,7 @@ designed to run fullscreen on a rotated monitor and currently contains:
 
 - a tabbed 16:9 monitor for the muted Twitch stream and OBS Program video;
 - Twitch's live embedded chat surface;
-- compact Whiskey Sip, Croak Twice, Fly Catch, Angry, Embarrassed, Surprised, and Understanding controls
+- compact Whiskey Sip, Croak Twice, Fly Catch, Angry, Embarrassed, Surprised, Understanding, and Vaping controls
   for Berry;
 - a manually managed, reorderable sound-effects panel;
 - live OBS scene controls with Starting Soon music-tail automation;

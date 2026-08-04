@@ -114,7 +114,7 @@ export function ObsScenesPanel({
       role="region"
       aria-labelledby="obs-scenes-title"
     >
-      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center border-b bg-[#101518] px-3">
+      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center border-b border-[#20282c] bg-[#0e1315] px-3">
         <CardTitle id="obs-scenes-title" className="text-sm text-[#e4e9e9]">
           OBS scenes
         </CardTitle>

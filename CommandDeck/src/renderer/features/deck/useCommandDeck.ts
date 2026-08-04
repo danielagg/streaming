@@ -17,6 +17,7 @@ const EMPTY_ACTIONS: Record<BerryAction, BerryActionState> = {
   embarrassed: { action: "embarrassed", phase: "idle" },
   surprised: { action: "surprised", phase: "idle" },
   understanding: { action: "understanding", phase: "idle" },
+  vaping: { action: "vaping", phase: "idle" },
 };
 
 const INITIAL_STATUS: DeckStatus = {

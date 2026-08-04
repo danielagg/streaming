@@ -38,7 +38,8 @@ export type BerryActionId =
   | "angry"
   | "embarrassed"
   | "surprised"
-  | "understanding";
+  | "understanding"
+  | "vaping";
 
 export interface BerryActionDefinition {
   id: BerryActionId;

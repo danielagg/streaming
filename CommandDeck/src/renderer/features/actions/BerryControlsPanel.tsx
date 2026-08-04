@@ -43,7 +43,12 @@ export function BerryControlsPanel({
       role="region"
       aria-labelledby="berry-actions-title"
     >
-      <CardContent className="grid min-h-0 flex-1 auto-rows-[106px] grid-cols-[repeat(4,minmax(0,106px))] content-start justify-center gap-x-3 gap-y-2.5 overflow-y-auto bg-[#0b0e10] p-1">
+      <CardHeader className="flex h-9 shrink-0 grid-cols-none flex-row items-center border-b border-[#20282c] bg-[#0e1315] px-3">
+        <CardTitle id="berry-actions-title" className="text-sm text-[#e4e9e9]">
+          Berry controls
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid min-h-0 flex-1 auto-rows-[100px] grid-cols-4 content-start gap-2 overflow-x-hidden overflow-y-auto bg-[#090d0f] p-2">
         {configuredActions.map((configured) => {
           const definition = resolveActionDefinition(
             configured.id,
@@ -55,6 +60,7 @@ export function BerryControlsPanel({
               key={configured.id}
               definition={definition}
               state={actions[definition.action]}
+              accent={configured.accent}
               disabled={effectiveRemixStatus !== "connected"}
               onTrigger={() => onTrigger(definition.action)}
             />
