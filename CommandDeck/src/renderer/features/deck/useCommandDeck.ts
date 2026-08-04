@@ -13,6 +13,8 @@ const EMPTY_ACTIONS: Record<BerryAction, BerryActionState> = {
   whiskey: { action: "whiskey", phase: "idle" },
   croak: { action: "croak", phase: "idle" },
   fly: { action: "fly", phase: "idle" },
+  angry: { action: "angry", phase: "idle" },
+  embarrassed: { action: "embarrassed", phase: "idle" },
 };
 
 const INITIAL_STATUS: DeckStatus = {

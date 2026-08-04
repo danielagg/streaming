@@ -21,6 +21,7 @@ import type { ObsSceneDefinition, ObsState } from "../../../shared/types";
 const EMPTY_STATE: ObsState = {
   currentScene: null,
   musicTail: { state: "idle", remainingMs: 0 },
+  recording: { active: false, paused: false },
 };
 
 const SCENE_ICONS = {

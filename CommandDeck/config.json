@@ -80,6 +80,24 @@
       "description": "Fast tongue strike and recovery.",
       "durationMs": 1400,
       "accent": "#d96d91"
+    },
+    {
+      "id": "angry",
+      "number": "04",
+      "name": "Angry",
+      "stateName": "Angry",
+      "description": "A furious one-beat tremble and settle.",
+      "durationMs": 1400,
+      "accent": "#e05258"
+    },
+    {
+      "id": "embarrassed",
+      "number": "05",
+      "name": "Embarrassed",
+      "stateName": "Embarrassed",
+      "description": "A bashful blush and self-conscious sway.",
+      "durationMs": 2100,
+      "accent": "#e77aa2"
     }
   ]
 }

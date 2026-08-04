@@ -15,6 +15,7 @@ const COMMAND_TIMEOUT_MS = 5_000;
 type BackendCommand =
   | { type: "action.trigger"; payload: { actionId: BerryActionId } }
   | { type: "obs.scene.set"; payload: { sceneName: string } }
+  | { type: "obs.preview.start"; payload: Record<string, never> }
   | { type: "obs.music.stop"; payload: Record<string, never> }
   | {
       type: "service.reconnect";

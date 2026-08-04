@@ -1,4 +1,9 @@
-export type BerryAction = 'whiskey' | 'croak' | 'fly';
+export type BerryAction =
+  | 'whiskey'
+  | 'croak'
+  | 'fly'
+  | 'angry'
+  | 'embarrassed';
 export type ConnectionState = 'connected' | 'connecting' | 'offline';
 
 export interface ChatAuthor {

@@ -32,6 +32,7 @@ const serviceStatuses = new Map<ServiceName, ServiceStatus>();
 const obsState: ObsState = {
   currentScene: null,
   musicTail: { state: "idle", remainingMs: 0 },
+  recording: { active: false, paused: false },
 };
 let mainWindow: BrowserWindow | undefined;
 let rendererServer: RendererServer | undefined;
@@ -70,6 +71,33 @@ function createWindow(rendererUrl: string): Display {
       webSecurity: true,
     },
   });
+
+  const rendererOrigin = new URL(rendererUrl).origin;
+  const isRendererOrigin = (value: string): boolean => {
+    try {
+      return new URL(value).origin === rendererOrigin;
+    } catch {
+      return false;
+    }
+  };
+  mainWindow.webContents.session.setPermissionCheckHandler(
+    (_webContents, permission, requestingOrigin, details) =>
+      permission === "media" &&
+      isRendererOrigin(requestingOrigin) &&
+      details.mediaType === "video",
+  );
+  mainWindow.webContents.session.setPermissionRequestHandler(
+    (webContents, permission, callback, details) => {
+      const trusted = isRendererOrigin(webContents.getURL());
+      const mediaTypes = (details as Electron.MediaAccessPermissionRequest)
+        .mediaTypes;
+      const videoOnly =
+        permission === "media" &&
+        mediaTypes?.length === 1 &&
+        mediaTypes[0] === "video";
+      callback(trusted && videoOnly);
+    },
+  );
 
   rememberDisplay(display);
   mainWindow.once("ready-to-show", () => {
@@ -163,7 +191,11 @@ function registerIpc(): void {
   ipcMain.handle("command-deck:get-obs-state", (): ObsState => ({
     currentScene: obsState.currentScene,
     musicTail: { ...obsState.musicTail },
+    recording: { ...obsState.recording },
   }));
+  ipcMain.handle("command-deck:start-obs-preview", (): Promise<void> =>
+    backend.send({ type: "obs.preview.start", payload: {} }),
+  );
   ipcMain.handle(
     "command-deck:set-obs-scene",
     (_event: IpcMainInvokeEvent, sceneName: string): Promise<void> => {
@@ -222,6 +254,9 @@ backend.on("event", (event: BackendEvent) => {
   }
   if (event.type === "obs.music.tail") {
     obsState.musicTail = event.payload;
+  }
+  if (event.type === "obs.recording.changed") {
+    obsState.recording = event.payload;
   }
   if (mainWindow && !mainWindow.isDestroyed()) {
     if (event.type === "remix.preview.ready") {

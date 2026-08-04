@@ -121,3 +121,38 @@ def test_obs_auth_response_matches_protocol_formula():
     assert build_auth_response("password", "salt", "challenge") == (
         "zTM5ki6L2vVvBQiTG9ckH1Lh64AbnCf6XZ226UmnkIA="
     )
+
+
+@pytest.mark.asyncio
+async def test_preview_starts_virtual_camera_only_when_needed():
+    client = FakeObsClient()
+
+    async def emit(_kind, _payload, _request_id=None):
+        return None
+
+    service = ObsService(obs_config(), emit, client=client)
+    await service.start_preview()
+
+    assert client.calls == [("GetVirtualCamStatus", {}), ("StartVirtualCam", {})]
+
+
+@pytest.mark.asyncio
+async def test_record_state_event_is_forwarded():
+    client = FakeObsClient()
+    events = []
+
+    async def emit(kind, payload, request_id=None):
+        events.append((kind, payload, request_id))
+
+    service = ObsService(obs_config(), emit, client=client)
+    await service._handle_obs_event(
+        "RecordStateChanged", {"outputActive": True, "outputPaused": False}
+    )
+
+    assert events == [
+        (
+            "obs.recording.changed",
+            {"active": True, "paused": False},
+            None,
+        )
+    ]

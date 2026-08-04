@@ -36,7 +36,13 @@ interface RawConfig {
   };
 }
 
-const ACTION_IDS = new Set<BerryActionId>(["whiskey", "croak", "fly"]);
+const ACTION_IDS = new Set<BerryActionId>([
+  "whiskey",
+  "croak",
+  "fly",
+  "angry",
+  "embarrassed",
+]);
 const ALERT_SEVERITIES = new Set<AlertSeverity>([
   "info",
   "warning",

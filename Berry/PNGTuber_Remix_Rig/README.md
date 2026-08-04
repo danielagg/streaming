@@ -133,13 +133,15 @@ The `sources/` directory contains the non-destructive chroma-key source renders.
 ## Unified animation hotkeys
 
 Open `Start Berry Actions.cmd` once while streaming. It maintains one local
-WebSocket connection to Remix and handles both one-shot animations:
+WebSocket connection to Remix and handles the one-shot animations:
 
 - Triple-tap `F13`: Whiskey Sip for 2 seconds
 - Triple-tap `F14`: Croak once with synchronized audio
 - Triple-tap `F15`: Fly Catch for 1.4 seconds
+- Triple-tap `F16`: Angry Tremble for 1.4 seconds
+- Triple-tap `F17`: Embarrassed Sway for 2.1 seconds
 
 The helper remembers and restores whichever normal state was active. Keep the
-Remix states named exactly `Whiskey Sip`, `Croaking`, and `Fly Catch`, start
-Remix's WebSocket server on port `9321`, and do not also bind F13/F14/F15
-inside Remix.
+Remix states named exactly `Whiskey Sip`, `Croaking`, `Fly Catch`, `Angry`, and
+`Embarrassed`, start Remix's WebSocket server on port `9321`, and do not also
+bind F13/F14/F15/F16/F17 inside Remix.

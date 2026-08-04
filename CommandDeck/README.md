@@ -3,9 +3,10 @@
 Command Deck is a portrait-first Windows control surface for the stream. It is
 designed to run fullscreen on a rotated monitor and currently contains:
 
-- a 16:9 Twitch stream monitor;
+- a tabbed 16:9 monitor for the muted Twitch stream and OBS Program video;
 - Twitch's live embedded chat surface;
-- compact Whiskey Sip, Croak Twice, and Fly Catch controls for Berry;
+- compact Whiskey Sip, Croak Twice, Fly Catch, Angry, and Embarrassed controls
+  for Berry;
 - a manually managed, reorderable sound-effects panel;
 - live OBS scene controls with Starting Soon music-tail automation;
 - automatic PNGTuber Remix launch, state control, state restoration, and Croak
@@ -24,7 +25,9 @@ uses Twitch's supported embed so live messages work without storing Twitch
 credentials in Command Deck.
 
 The OBS panel controls the configured live scenes through OBS WebSocket v5 and
-tracks scene changes made in either OBS or Command Deck. Moving from `Starting
+tracks scene and recording changes made in either OBS or Command Deck. The OBS
+monitor tab starts OBS Virtual Camera on demand and displays its video-only
+Program output, including a live recording-state indicator. Moving from `Starting
 Soon` to `Main (screen share)` keeps the shared `StartingSoon Music` media source
 playing, then fades it over the final five seconds and stops it 30 seconds after
 the scene change.

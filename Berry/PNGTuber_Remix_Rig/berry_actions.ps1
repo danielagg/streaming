@@ -2,7 +2,9 @@ param(
     [string]$WebSocketUrl = "ws://127.0.0.1:9321",
     [string]$WhiskeyState = "Whiskey Sip",
     [string]$CroakState = "Croaking",
-    [string]$FlyCatchState = "Fly Catch"
+    [string]$FlyCatchState = "Fly Catch",
+    [string]$AngryState = "Angry",
+    [string]$EmbarrassedState = "Embarrassed"
 )
 
 $ErrorActionPreference = "Stop"
@@ -120,7 +122,13 @@ try {
 
     $states = Send-Request -Socket $socket -Message @{ event = "list_states" }
     $stateNames = @($states.states | ForEach-Object { $_.name })
-    $actionStates = @($WhiskeyState, $CroakState, $FlyCatchState)
+    $actionStates = @(
+        $WhiskeyState,
+        $CroakState,
+        $FlyCatchState,
+        $AngryState,
+        $EmbarrassedState
+    )
 
     foreach ($requiredState in $actionStates) {
         if ($requiredState -notin $stateNames) {
@@ -149,6 +157,8 @@ try {
         F13 = 0x7C
         F14 = 0x7D
         F15 = 0x7E
+        F16 = 0x7F
+        F17 = 0x80
     }
     $wasDown = @{}
     foreach ($name in $keys.Keys) {
@@ -164,6 +174,8 @@ try {
     Write-Host "  Triple-tap F13  Whiskey Sip"
     Write-Host "  Triple-tap F14  Croaking"
     Write-Host "  Triple-tap F15  Fly Catch"
+    Write-Host "  Triple-tap F16  Angry"
+    Write-Host "  Triple-tap F17  Embarrassed"
     Write-Host ""
     Write-Host "Press Ctrl+C to stop."
     Write-Host ""
@@ -224,6 +236,24 @@ try {
                             -StateName $FlyCatchState `
                             -ReturnStateName $normalState.name `
                             -DurationMs 1400 `
+                            -AudioPlayer $null
+                    }
+                    F16 {
+                        Write-Host "Angry"
+                        Play-Action `
+                            -Socket $socket `
+                            -StateName $AngryState `
+                            -ReturnStateName $normalState.name `
+                            -DurationMs 1400 `
+                            -AudioPlayer $null
+                    }
+                    F17 {
+                        Write-Host "Embarrassed"
+                        Play-Action `
+                            -Socket $socket `
+                            -StateName $EmbarrassedState `
+                            -ReturnStateName $normalState.name `
+                            -DurationMs 2100 `
                             -AudioPlayer $null
                     }
                 }

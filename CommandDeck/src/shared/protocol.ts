@@ -6,6 +6,7 @@ const BACKEND_EVENT_TYPES = new Set<BackendEvent["type"]>([
   "service.status",
   "remix.preview.ready",
   "obs.scene.changed",
+  "obs.recording.changed",
   "obs.music.tail",
   "chat.message",
   "berry.action.progress",

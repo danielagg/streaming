@@ -42,7 +42,7 @@ def build_auth_response(password: str, salt: str, challenge: str) -> str:
 class ObsWebSocketClient:
     """Minimal OBS WebSocket v5 client for scenes and media controls."""
 
-    EVENT_SUBSCRIPTIONS = 1 | 4 | 256  # General, Scenes, MediaInputs
+    EVENT_SUBSCRIPTIONS = 1 | 4 | 64 | 256  # General, Scenes, Outputs, MediaInputs
 
     def __init__(
         self,
@@ -231,6 +231,8 @@ class ObsService:
             config.websocket_url, config.password, self._handle_obs_event
         )
         self.current_scene: str | None = None
+        self.recording_active = False
+        self.recording_paused = False
         self._run_task: asyncio.Task[None] | None = None
         self._tail_task: asyncio.Task[None] | None = None
         self._scene_lock = asyncio.Lock()
@@ -295,9 +297,12 @@ class ObsService:
             finally:
                 await self._cancel_tail()
                 self.current_scene = None
+                self.recording_active = False
+                self.recording_paused = False
                 await self.emit(
                     "obs.music.tail", {"state": "idle", "remainingMs": 0}, None
                 )
+                await self._emit_recording_state()
                 await self.client.close()
             if not self._closing:
                 await asyncio.sleep(self.RECONNECT_DELAY_SECONDS)
@@ -330,15 +335,37 @@ class ObsService:
             await self.emit(
                 "obs.scene.changed", {"sceneName": self.current_scene}, None
             )
+        record_status = await self.client.request("GetRecordStatus")
+        self.recording_active = bool(record_status.get("outputActive", False))
+        self.recording_paused = bool(record_status.get("outputPaused", False))
+        await self._emit_recording_state()
 
     async def _handle_obs_event(
         self, event_type: str, event_data: dict[str, Any]
     ) -> None:
-        if event_type != "CurrentProgramSceneChanged":
-            return
-        scene_name = event_data.get("sceneName")
-        if isinstance(scene_name, str):
-            await self._scene_changed(scene_name)
+        if event_type == "CurrentProgramSceneChanged":
+            scene_name = event_data.get("sceneName")
+            if isinstance(scene_name, str):
+                await self._scene_changed(scene_name)
+        elif event_type == "RecordStateChanged":
+            self.recording_active = bool(event_data.get("outputActive", False))
+            self.recording_paused = bool(event_data.get("outputPaused", False))
+            await self._emit_recording_state()
+
+    async def _emit_recording_state(self) -> None:
+        await self.emit(
+            "obs.recording.changed",
+            {
+                "active": self.recording_active,
+                "paused": self.recording_paused,
+            },
+            None,
+        )
+
+    async def start_preview(self) -> None:
+        status = await self.client.request("GetVirtualCamStatus")
+        if not bool(status.get("outputActive", False)):
+            await self.client.request("StartVirtualCam")
 
     async def _scene_changed(self, scene_name: str) -> None:
         async with self._scene_lock:

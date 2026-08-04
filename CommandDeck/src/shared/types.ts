@@ -31,7 +31,12 @@ export interface ChatMessage {
   timestamp: string;
 }
 
-export type BerryActionId = "whiskey" | "croak" | "fly";
+export type BerryActionId =
+  | "whiskey"
+  | "croak"
+  | "fly"
+  | "angry"
+  | "embarrassed";
 
 export interface BerryActionDefinition {
   id: BerryActionId;
@@ -83,6 +88,10 @@ export interface ObsMusicTailState {
 export interface ObsState {
   currentScene: string | null;
   musicTail: ObsMusicTailState;
+  recording: {
+    active: boolean;
+    paused: boolean;
+  };
 }
 
 export interface ObsRendererConfig {
@@ -123,6 +132,10 @@ export type BackendEvent =
   | { type: "service.status"; payload: ServiceStatus }
   | { type: "remix.preview.ready"; payload: Record<string, never> }
   | { type: "obs.scene.changed"; payload: { sceneName: string } }
+  | {
+      type: "obs.recording.changed";
+      payload: { active: boolean; paused: boolean };
+    }
   | { type: "obs.music.tail"; payload: ObsMusicTailState }
   | { type: "chat.message"; payload: ChatMessage }
   | {
@@ -148,6 +161,7 @@ export interface CommandDeckAPI {
   getSoundEffectAudio(id: string): Promise<ArrayBuffer>;
   setSoundEffectOrder(order: string[]): Promise<SoundEffect[]>;
   getObsState(): Promise<ObsState>;
+  startObsPreview(): Promise<void>;
   setObsScene(sceneName: string): Promise<void>;
   stopObsMusic(): Promise<void>;
   onTwitchAuthWindowClosed(listener: () => void): () => void;

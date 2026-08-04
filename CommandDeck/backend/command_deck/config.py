@@ -97,6 +97,24 @@ def default_config() -> AppConfig:
                 "Fast tongue strike and recovery.",
                 "#D96D91",
             ),
+            ActionDefinition(
+                "angry",
+                "Angry",
+                "Angry",
+                1400,
+                "04",
+                "A furious one-beat tremble and settle.",
+                "#E05258",
+            ),
+            ActionDefinition(
+                "embarrassed",
+                "Embarrassed",
+                "Embarrassed",
+                2100,
+                "05",
+                "A bashful blush and self-conscious sway.",
+                "#E77AA2",
+            ),
         ),
     )
 

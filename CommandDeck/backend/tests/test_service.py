@@ -86,7 +86,39 @@ async def test_cached_service_and_obs_state_is_replayed_to_late_client():
         ),
         service.event("obs.scene.changed", {"sceneName": "BRB"}),
         service.event("obs.music.tail", {"state": "idle", "remainingMs": 0}),
+        service.event(
+            "obs.recording.changed", {"active": False, "paused": False}
+        ),
     ]
+
+
+@pytest.mark.asyncio
+async def test_start_obs_preview_command_starts_virtual_camera():
+    service = CommandDeckService(default_config(), mock_remix=True)
+    messages = []
+    preview_starts = 0
+
+    async def capture(kind, payload, request_id=None):
+        messages.append((kind, payload, request_id))
+
+    async def start_preview():
+        nonlocal preview_starts
+        preview_starts += 1
+
+    service.emit = capture
+    service.obs.start_preview = start_preview
+
+    await service.handle_command(
+        {
+            "version": 1,
+            "id": "preview-1",
+            "type": "obs.preview.start",
+            "payload": {},
+        }
+    )
+
+    assert preview_starts == 1
+    assert messages == [("command.result", {"ok": True}, "preview-1")]
 
 
 @pytest.mark.asyncio

@@ -25,6 +25,7 @@ export interface DeckBridge {
   subscribeStatus(listener: (status: Partial<DeckStatus>) => void): () => void;
   subscribeActions(listener: (event: BerryActionState) => void): () => void;
   getObsState(): Promise<ObsState>;
+  startObsPreview(): Promise<void>;
   setObsScene(sceneName: string): Promise<void>;
   stopObsMusic(): Promise<void>;
   subscribeTwitchAuth(listener: () => void): () => void;
@@ -48,6 +49,8 @@ const FALLBACK_CONFIG: RendererConfig = {
     { id: 'whiskey', number: '01', name: 'Whiskey', description: 'Bring out Berry’s favorite drink', durationMs: 4_000, accent: '#f0c872' },
     { id: 'croak', number: '02', name: 'Croak', description: 'Play the croak animation and audio', durationMs: 4_000, accent: '#9be088' },
     { id: 'fly', number: '03', name: 'Fly', description: 'Send Berry after a passing snack', durationMs: 4_000, accent: '#b8a3ed' },
+    { id: 'angry', number: '04', name: 'Angry', description: 'Let Berry simmer with rage', durationMs: 1_400, accent: '#e05258' },
+    { id: 'embarrassed', number: '05', name: 'Embarrassed', description: 'Give Berry a bashful self-conscious sway', durationMs: 2_100, accent: '#e77aa2' },
   ],
   alertRules: DEMO_ALERT_RULES,
   obs: {
@@ -102,6 +105,7 @@ function createLiveBridge(): DeckBridge {
   let obsState: ObsState = {
     currentScene: null,
     musicTail: { state: 'idle', remainingMs: 0 },
+    recording: { active: false, paused: false },
   };
   const subscribers = {
     chat: new Set<(message: ChatMessage) => void>(),
@@ -121,6 +125,11 @@ function createLiveBridge(): DeckBridge {
     }
     if (event.type === 'obs.music.tail') {
       obsState = { ...obsState, musicTail: event.payload };
+      subscribers.obs.forEach((listener) => listener(obsState));
+      return;
+    }
+    if (event.type === 'obs.recording.changed') {
+      obsState = { ...obsState, recording: event.payload };
       subscribers.obs.forEach((listener) => listener(obsState));
       return;
     }
@@ -172,6 +181,7 @@ function createLiveBridge(): DeckBridge {
       obsState = await api.getObsState();
       return obsState;
     },
+    startObsPreview: () => api.startObsPreview(),
     setObsScene: (sceneName) => api.setObsScene(sceneName),
     stopObsMusic: () => api.stopObsMusic(),
     subscribeTwitchAuth: (listener) => api.onTwitchAuthWindowClosed(listener),
@@ -219,8 +229,10 @@ function createDemoBridge(): DeckBridge {
       return {
         currentScene: 'Main (screen share)',
         musicTail: { state: 'idle', remainingMs: 0 },
+        recording: { active: false, paused: false },
       };
     },
+    async startObsPreview() { return undefined; },
     async setObsScene() { return undefined; },
     async stopObsMusic() { return undefined; },
     subscribeTwitchAuth() { return () => undefined; },

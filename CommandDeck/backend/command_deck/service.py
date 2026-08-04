@@ -51,6 +51,7 @@ class CommandDeckService:
             "state": "idle",
             "remainingMs": 0,
         }
+        self.obs_recording: dict[str, Any] = {"active": False, "paused": False}
         self.shutdown_event = asyncio.Event()
         self.remix = (
             MockRemixClient([action.state_name for action in config.actions])
@@ -86,6 +87,8 @@ class CommandDeckService:
                 self.obs_scene_name = scene_name
         elif event_type == "obs.music.tail":
             self.obs_music_tail = payload.copy()
+        elif event_type == "obs.recording.changed":
+            self.obs_recording = payload.copy()
 
     async def _broadcast(
         self, event_type: str, payload: dict[str, Any], request_id: str | None
@@ -113,6 +116,9 @@ class CommandDeckService:
                 self.event("obs.scene.changed", {"sceneName": self.obs_scene_name})
             )
         await socket.send_json(self.event("obs.music.tail", self.obs_music_tail))
+        await socket.send_json(
+            self.event("obs.recording.changed", self.obs_recording)
+        )
 
     async def health(self, _request: web.Request) -> web.Response:
         return web.json_response(
@@ -255,6 +261,9 @@ class CommandDeckService:
             await self.emit("command.result", {"ok": True}, request_id)
         elif command_type == "obs.music.stop":
             await self.obs.stop_music()
+            await self.emit("command.result", {"ok": True}, request_id)
+        elif command_type == "obs.preview.start":
+            await self.obs.start_preview()
             await self.emit("command.result", {"ok": True}, request_id)
         elif command_type == "backend.shutdown":
             await self.emit("command.result", {"ok": True}, request_id)
