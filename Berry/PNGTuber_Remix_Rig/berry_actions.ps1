@@ -6,7 +6,8 @@ param(
     [string]$AngryState = "Angry",
     [string]$EmbarrassedState = "Embarrassed",
     [string]$SurprisedState = "Surprised",
-    [string]$UnderstandingState = "Understanding"
+    [string]$UnderstandingState = "Understanding",
+    [string]$VapingState = "Vaping"
 )
 
 $ErrorActionPreference = "Stop"
@@ -131,7 +132,8 @@ try {
         $AngryState,
         $EmbarrassedState,
         $SurprisedState,
-        $UnderstandingState
+        $UnderstandingState,
+        $VapingState
     )
 
     foreach ($requiredState in $actionStates) {
@@ -165,6 +167,7 @@ try {
         F17 = 0x80
         F18 = 0x81
         F19 = 0x82
+        F20 = 0x83
     }
     $wasDown = @{}
     foreach ($name in $keys.Keys) {
@@ -184,6 +187,7 @@ try {
     Write-Host "  Triple-tap F17  Embarrassed"
     Write-Host "  Triple-tap F18  Surprised"
     Write-Host "  Triple-tap F19  Understanding"
+    Write-Host "  Triple-tap F20  Vaping"
     Write-Host ""
     Write-Host "Press Ctrl+C to stop."
     Write-Host ""
@@ -280,6 +284,15 @@ try {
                             -StateName $UnderstandingState `
                             -ReturnStateName $normalState.name `
                             -DurationMs 2100 `
+                            -AudioPlayer $null
+                    }
+                    F20 {
+                        Write-Host "Vaping"
+                        Play-Action `
+                            -Socket $socket `
+                            -StateName $VapingState `
+                            -ReturnStateName $normalState.name `
+                            -DurationMs 4600 `
                             -AudioPlayer $null
                     }
                 }
