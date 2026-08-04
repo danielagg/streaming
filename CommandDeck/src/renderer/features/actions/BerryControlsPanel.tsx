@@ -43,17 +43,7 @@ export function BerryControlsPanel({
       role="region"
       aria-labelledby="berry-actions-title"
     >
-      <CardHeader className="flex h-[46px] shrink-0 grid-cols-none flex-row items-center border-b bg-[#101518] px-3">
-        <div>
-          <CardTitle
-            id="berry-actions-title"
-            className="text-sm text-[#e4e9e9]"
-          >
-            Berry controls
-          </CardTitle>
-        </div>
-      </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 auto-rows-[106px] grid-cols-[repeat(3,minmax(0,106px))] content-start justify-center gap-x-3 gap-y-2.5 overflow-y-auto bg-[#0b0e10] p-3.5">
+      <CardContent className="grid min-h-0 flex-1 auto-rows-[106px] grid-cols-[repeat(4,minmax(0,106px))] content-start justify-center gap-x-3 gap-y-2.5 overflow-y-auto bg-[#0b0e10] p-1">
         {configuredActions.map((configured) => {
           const definition = resolveActionDefinition(
             configured.id,
