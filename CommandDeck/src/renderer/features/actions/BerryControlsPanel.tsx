@@ -39,7 +39,7 @@ export function BerryControlsPanel({
 
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-[260px] md:col-start-1 md:col-end-8 md:row-start-4 md:min-h-0"
+      className="col-span-1 row-auto min-h-[430px] md:col-start-1 md:col-end-7 md:row-start-4 md:min-h-0"
       role="region"
       aria-labelledby="berry-actions-title"
     >
@@ -53,7 +53,7 @@ export function BerryControlsPanel({
           </CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="grid min-h-0 flex-1 auto-rows-[88px] grid-cols-[repeat(auto-fill,78px)] content-start gap-3 bg-[#0b0e10] p-3.5">
+      <CardContent className="grid min-h-0 flex-1 auto-rows-[106px] grid-cols-[repeat(3,minmax(0,106px))] content-start justify-center gap-x-3 gap-y-2.5 overflow-y-auto bg-[#0b0e10] p-3.5">
         {configuredActions.map((configured) => {
           const definition = resolveActionDefinition(
             configured.id,
