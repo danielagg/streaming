@@ -45,7 +45,8 @@ function TwitchPreview({ config }: { config: RendererConfig | null }) {
             Twitch channel not configured
           </strong>
           <small className="mt-1.5 max-w-[340px] text-[10px] leading-relaxed text-muted-foreground">
-            Add your channel in Command Deck settings to enable the live preview.
+            Add your channel in Command Deck settings to enable the live
+            preview.
           </small>
         </div>
       )}
@@ -65,7 +66,9 @@ function TwitchPreview({ config }: { config: RendererConfig | null }) {
   );
 }
 
-function findObsCamera(devices: MediaDeviceInfo[]): MediaDeviceInfo | undefined {
+function findObsCamera(
+  devices: MediaDeviceInfo[],
+): MediaDeviceInfo | undefined {
   return devices.find((device) => {
     const label = device.label.toLowerCase();
     return (
@@ -78,7 +81,9 @@ function findObsCamera(devices: MediaDeviceInfo[]): MediaDeviceInfo | undefined 
 
 async function waitForObsCamera(): Promise<MediaDeviceInfo> {
   for (let attempt = 0; attempt < 20; attempt += 1) {
-    const camera = findObsCamera(await navigator.mediaDevices.enumerateDevices());
+    const camera = findObsCamera(
+      await navigator.mediaDevices.enumerateDevices(),
+    );
     if (camera) return camera;
     await new Promise((resolve) => window.setTimeout(resolve, 250));
   }
@@ -104,7 +109,9 @@ function ObsPreview({ status }: { status: ConnectionState }) {
       .catch((reason: unknown) => {
         if (active) {
           setError(
-            reason instanceof Error ? reason.message : "Could not read OBS state.",
+            reason instanceof Error
+              ? reason.message
+              : "Could not read OBS state.",
           );
         }
       });
@@ -146,7 +153,9 @@ function ObsPreview({ status }: { status: ConnectionState }) {
     void connectPreview().catch((reason: unknown) => {
       if (active) {
         setError(
-          reason instanceof Error ? reason.message : "Could not open the OBS preview.",
+          reason instanceof Error
+            ? reason.message
+            : "Could not open the OBS preview.",
         );
       }
     });
@@ -157,21 +166,19 @@ function ObsPreview({ status }: { status: ConnectionState }) {
     };
   }, [status]);
 
-  const recordingLabel = obsState.recording.paused
-    ? "Recording paused"
-    : obsState.recording.active
-      ? "Recording"
-      : "Program preview";
-
   return (
     <>
-      {!loaded && !error && <LoadingOverlay>Connecting to OBS Program</LoadingOverlay>}
+      {!loaded && !error && (
+        <LoadingOverlay>Connecting to OBS Program</LoadingOverlay>
+      )}
       {error && (
         <div className="absolute inset-0 grid place-content-center justify-items-center p-6 text-center">
           <div className="mb-2.5 grid size-9 place-items-center border border-[#674a3f] bg-[#251714] text-[#df9a82]">
             <MonitorPlay className="size-4" />
           </div>
-          <strong className="text-[13px] text-[#e4e4e7]">OBS preview unavailable</strong>
+          <strong className="text-[13px] text-[#e4e4e7]">
+            OBS preview unavailable
+          </strong>
           <small className="mt-1.5 max-w-[380px] text-[10px] leading-relaxed text-muted-foreground">
             {error}
           </small>
@@ -189,19 +196,6 @@ function ObsPreview({ status }: { status: ConnectionState }) {
         aria-label="OBS Program video preview"
         onPlaying={() => setLoaded(true)}
       />
-      {loaded && (
-        <div className="pointer-events-none absolute left-2.5 top-2.5 z-20 flex items-center gap-1.5 border border-black/50 bg-black/70 px-2 py-1 font-mono text-[8px] font-bold uppercase tracking-[.09em] text-white">
-          <Circle
-            className={cn(
-              "size-2 fill-current",
-              obsState.recording.active && !obsState.recording.paused
-                ? "text-[#ed655d]"
-                : "text-[#a1a1aa]",
-            )}
-          />
-          {recordingLabel}
-        </div>
-      )}
     </>
   );
 }
@@ -246,7 +240,9 @@ export function TwitchStreamPanel({
               >
                 <Icon className="size-3.5" aria-hidden="true" />
                 {label}
-                {selected && <span className="absolute inset-x-0 bottom-0 h-px bg-primary" />}
+                {selected && (
+                  <span className="absolute inset-x-0 bottom-0 h-px bg-primary" />
+                )}
               </button>
             );
           })}
