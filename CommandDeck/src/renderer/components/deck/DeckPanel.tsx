@@ -10,7 +10,7 @@ export function DeckPanel({
   return (
     <Card
       className={cn(
-        "min-w-0 gap-0 overflow-hidden rounded-none border-[#20282c] bg-[#0b0f11] shadow-none",
+        "min-w-0 gap-0 overflow-hidden rounded-none border-[#2f2f35] bg-[#18181b] shadow-none",
         className,
       )}
       {...props}

@@ -114,12 +114,12 @@ export function ObsScenesPanel({
       role="region"
       aria-labelledby="obs-scenes-title"
     >
-      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center border-b border-[#20282c] bg-[#0e1315] px-3">
-        <CardTitle id="obs-scenes-title" className="text-sm text-[#e4e9e9]">
+      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center border-b border-[#2f2f35] bg-[#202023] px-3">
+        <CardTitle id="obs-scenes-title" className="text-sm text-[#f4f4f5]">
           OBS scenes
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-2 bg-[#0b0e10] p-2">
+      <CardContent className="flex min-h-0 flex-1 flex-col gap-2 bg-[#18181b] p-2">
         {error && (
           <div
             role="alert"
@@ -147,8 +147,8 @@ export function ObsScenesPanel({
                     type="button"
                     variant="deck"
                     className={cn(
-                      "relative h-auto min-h-[112px] flex-col gap-2 rounded-none border bg-[#0e1315] px-2 py-3 text-[#b9c4c6] transition-[border-color,background-color,color,box-shadow]",
-                      active && "bg-[#132024] text-[#edf5f5]",
+                      "relative h-auto min-h-[112px] flex-col gap-2 rounded-none border bg-[#202023] px-2 py-3 text-[#d4d4d8] transition-[border-color,background-color,color,box-shadow]",
+                      active && "bg-[#27272a] text-[#fafafa]",
                     )}
                     style={
                       active
@@ -192,7 +192,7 @@ export function ObsScenesPanel({
                 "flex min-h-10 items-center gap-2 border px-3",
                 musicActive
                   ? "border-[#76633a] bg-[#211b10] text-[#e2c77b]"
-                  : "border-[#293338] bg-[#0d1113] text-muted-foreground",
+                  : "border-[#3f3f46] bg-[#202023] text-muted-foreground",
               )}
             >
               <Music2 aria-hidden="true" className="size-4 shrink-0" />
@@ -207,7 +207,7 @@ export function ObsScenesPanel({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-7 rounded-none border-[#4a555a] bg-[#141a1d] px-2 font-mono text-[8px] font-bold uppercase tracking-[.06em]"
+                className="h-7 rounded-none border-[#52525b] bg-[#27272a] px-2 font-mono text-[8px] font-bold uppercase tracking-[.06em]"
                 disabled={!connected || !musicActive || stoppingMusic}
                 onClick={() => void stopMusic()}
               >

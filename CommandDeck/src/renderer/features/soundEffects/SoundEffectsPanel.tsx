@@ -39,6 +39,7 @@ function moveItem(
 
 export function SoundEffectsPanel() {
   const [effects, setEffects] = useState<SoundEffect[]>([]);
+  const [volume, setVolume] = useState(60);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -46,6 +47,7 @@ export function SoundEffectsPanel() {
   const [error, setError] = useState<string | null>(null);
   const playbackRef = useRef<Playback | null>(null);
   const playbackRequestRef = useRef(0);
+  const volumeRef = useRef(60);
 
   const stop = useCallback(() => {
     playbackRequestRef.current += 1;
@@ -62,10 +64,15 @@ export function SoundEffectsPanel() {
 
   useEffect(() => {
     let active = true;
-    void deckBridge
-      .getSoundEffects()
-      .then((next) => {
-        if (active) setEffects(next);
+    void Promise.all([
+      deckBridge.getSoundEffects(),
+      deckBridge.getSoundEffectVolume(),
+    ])
+      .then(([nextEffects, nextVolume]) => {
+        if (!active) return;
+        setEffects(nextEffects);
+        setVolume(nextVolume);
+        volumeRef.current = nextVolume;
       })
       .catch((reason: unknown) => {
         if (active)
@@ -101,6 +108,7 @@ export function SoundEffectsPanel() {
         new Blob([buffer], { type: "audio/mpeg" }),
       );
       const audio = new Audio(url);
+      audio.volume = volumeRef.current / 100;
       playbackRef.current = { id: effect.id, audio, url };
       audio.addEventListener("ended", stop, { once: true });
       audio.addEventListener(
@@ -151,23 +159,54 @@ export function SoundEffectsPanel() {
     saveOrder(next);
   };
 
+  const changeVolume = (next: number) => {
+    setVolume(next);
+    volumeRef.current = next;
+    if (playbackRef.current) playbackRef.current.audio.volume = next / 100;
+    setError(null);
+    void deckBridge.setSoundEffectVolume(next).catch((reason: unknown) => {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not save the sound effect volume.",
+      );
+    });
+  };
+
   return (
     <DeckPanel
       className="col-span-1 row-auto md:col-span-12 md:row-start-5 md:min-h-0"
       role="region"
       aria-labelledby="sound-effects-title"
     >
-      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center justify-between border-b border-[#20282c] bg-[#0e1315] px-3">
+      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center justify-between border-b border-[#2f2f35] bg-[#202023] px-3">
         <div>
           <CardTitle
             id="sound-effects-title"
-            className="text-sm text-[#e4e9e9]"
+            className="text-sm text-[#f4f4f5]"
           >
             Sound effects
           </CardTitle>
         </div>
+        <div className="flex items-center gap-2 text-[#a1a1aa]">
+          <Volume2 aria-hidden="true" className="size-3.5" />
+          <input
+            type="range"
+            min="0"
+            max="100"
+            step="1"
+            value={volume}
+            aria-label="Sound effect volume"
+            aria-valuetext={`${volume} percent`}
+            className="h-1 w-24 cursor-pointer accent-[#58aeb5]"
+            onChange={(event) => changeVolume(Number(event.currentTarget.value))}
+          />
+          <output className="w-6 text-right text-[10px] tabular-nums" aria-live="polite">
+            {volume}
+          </output>
+        </div>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-y-auto bg-[#0b0e10] p-2">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto bg-[#18181b] p-2">
         {error && (
           <div
             role="alert"
@@ -190,11 +229,11 @@ export function SoundEffectsPanel() {
                 <li
                   key={effect.id}
                   className={cn(
-                    "flex h-7 min-w-0 items-center gap-0.5 border-b bg-[#0d0f0f] px-0.5 transition-colors",
+                    "flex h-7 min-w-0 items-center gap-0.5 border-b bg-[#202023] px-0.5 transition-colors",
                     isPlaying
-                      ? "border-[#4d979d] bg-[#102124]"
-                      : "border-[#273136]",
-                    dragTargetId === effect.id && "border-primary bg-[#162226]",
+                      ? "border-[#4d979d] bg-[#27272a]"
+                      : "border-[#3f3f46]",
+                    dragTargetId === effect.id && "border-primary bg-[#27272a]",
                   )}
                   onDragOver={(event) => {
                     if (!draggedId || draggedId === effect.id) return;
@@ -218,7 +257,7 @@ export function SoundEffectsPanel() {
                   <button
                     type="button"
                     draggable
-                    className="flex h-full w-5 shrink-0 cursor-grab items-center justify-center text-[#647177] outline-none hover:text-primary focus-visible:ring-1 focus-visible:ring-ring active:cursor-grabbing"
+                    className="flex h-full w-5 shrink-0 cursor-grab items-center justify-center text-[#71717a] outline-none hover:text-primary focus-visible:ring-1 focus-visible:ring-ring active:cursor-grabbing"
                     aria-label={`Drag ${effect.filename} to reorder`}
                     onDragStart={(event) => {
                       event.dataTransfer.effectAllowed = "move";
@@ -233,7 +272,7 @@ export function SoundEffectsPanel() {
                     <GripVertical aria-hidden="true" className="size-3" />
                   </button>
                   <span
-                    className="min-w-0 flex-1 truncate px-1.5 text-[10px] font-medium leading-none text-[#dce4e4] hover:text-[#94b1b1] cursor-pointer"
+                    className="min-w-0 flex-1 cursor-pointer truncate px-1.5 text-[10px] font-medium leading-none text-[#e4e4e7] hover:text-[#a1a1aa]"
                     title={effect.filename}
                     onClick={() => void play(effect)}
                   >

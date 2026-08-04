@@ -5,7 +5,10 @@ import type { SoundEffect } from "../shared/types";
 
 interface SoundEffectsState {
   order: string[];
+  volume: number;
 }
+
+export const DEFAULT_SOUND_EFFECT_VOLUME = 60;
 
 function sameOrder(left: string[], right: string[]): boolean {
   return left.length === right.length && left.every((id, index) => id === right[index]);
@@ -19,12 +22,13 @@ export class SoundEffectsLibrary {
 
   list(): SoundEffect[] {
     const filenames = this.scanFilenames();
-    const savedOrder = this.readState().order;
+    const state = this.readState();
+    const savedOrder = state.order;
     const available = new Set(filenames);
     const ordered = savedOrder.filter((filename) => available.delete(filename));
     ordered.push(...filenames.filter((filename) => available.has(filename)));
 
-    if (!sameOrder(savedOrder, ordered)) this.writeState({ order: ordered });
+    if (!sameOrder(savedOrder, ordered)) this.writeState({ ...state, order: ordered });
     return ordered.map((filename) => ({ id: filename, filename }));
   }
 
@@ -37,8 +41,20 @@ export class SoundEffectsLibrary {
     ) {
       throw new Error("The sound effect order does not match the current MP3 files.");
     }
-    this.writeState({ order });
+    this.writeState({ ...this.readState(), order });
     return order.map((filename) => ({ id: filename, filename }));
+  }
+
+  getVolume(): number {
+    return this.readState().volume;
+  }
+
+  setVolume(volume: number): number {
+    if (!Number.isInteger(volume) || volume < 0 || volume > 100) {
+      throw new Error("Sound effect volume must be an integer from 0 to 100.");
+    }
+    this.writeState({ ...this.readState(), volume });
+    return volume;
   }
 
   readAudio(id: string): Buffer {
@@ -88,14 +104,21 @@ export class SoundEffectsLibrary {
     try {
       const parsed = JSON.parse(fs.readFileSync(this.statePath, "utf8")) as {
         order?: unknown;
+        volume?: unknown;
       };
       return {
         order: Array.isArray(parsed.order)
           ? parsed.order.filter((value): value is string => typeof value === "string")
           : [],
+        volume:
+          Number.isInteger(parsed.volume) &&
+          (parsed.volume as number) >= 0 &&
+          (parsed.volume as number) <= 100
+            ? (parsed.volume as number)
+            : DEFAULT_SOUND_EFFECT_VOLUME,
       };
     } catch {
-      return { order: [] };
+      return { order: [], volume: DEFAULT_SOUND_EFFECT_VOLUME };
     }
   }
 

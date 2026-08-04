@@ -50,17 +50,17 @@ export function TwitchChatPanel({
       className={cn(
         "relative col-span-1 row-auto min-h-[380px] md:col-start-7 md:col-end-13 md:row-start-4 md:min-h-0",
         chatExpanded &&
-          "fixed inset-1 z-40 size-auto min-h-0 shadow-[0_0_0_4px_#050708]",
+          "fixed inset-1 z-40 size-auto min-h-0 shadow-[0_0_0_4px_#09090b]",
       )}
       role="region"
       aria-label="Twitch chat"
     >
-      <CardHeader className="flex h-7 shrink-0 grid-cols-none flex-row items-center justify-end border-b bg-[#101518] px-1">
+      <CardHeader className="flex h-7 shrink-0 grid-cols-none flex-row items-center justify-end border-b bg-[#18181b] px-1">
         {src && (
           <Button
             variant="outline"
             size="sm"
-            className="h-5 rounded-none border-[#3c474c] bg-[#161d20] px-1.5 font-mono text-[8px] font-bold uppercase tracking-[.06em] text-[#c9d1d3] hover:border-primary hover:bg-[#161d20] hover:text-primary"
+            className="h-5 rounded-none border-[#3f3f46] bg-[#27272a] px-1.5 font-mono text-[8px] font-bold uppercase tracking-[.06em] text-[#d4d4d8] hover:border-primary hover:bg-[#27272a] hover:text-primary"
             type="button"
             aria-expanded={chatExpanded}
             onClick={() => setExpanded(!chatExpanded)}
@@ -74,11 +74,11 @@ export function TwitchChatPanel({
           </Button>
         )}
       </CardHeader>
-      <CardContent className="relative min-h-0 flex-1 overflow-hidden bg-[#0e0e10] p-0">
+      <CardContent className="relative min-h-0 flex-1 overflow-hidden bg-[#18181b] p-0">
         {!config && <LoadingOverlay>Loading chat configuration</LoadingOverlay>}
         {config && !config.twitchChannel.trim() && (
           <div className="absolute inset-0 grid place-content-center justify-items-center gap-2 text-center text-[10px] text-muted-foreground">
-            <strong className="text-xs text-[#c8d0d1]">
+            <strong className="text-xs text-[#d4d4d8]">
               Twitch channel not configured
             </strong>
             <small>Add a channel in Command Deck settings.</small>

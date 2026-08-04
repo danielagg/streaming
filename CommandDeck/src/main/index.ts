@@ -243,6 +243,17 @@ function registerIpc(): void {
       return soundEffects.setOrder(order);
     },
   );
+  ipcMain.handle("command-deck:get-sound-effect-volume", (): number => {
+    if (!soundEffects) throw new Error("Sound effects are not ready.");
+    return soundEffects.getVolume();
+  });
+  ipcMain.handle(
+    "command-deck:set-sound-effect-volume",
+    (_event: IpcMainInvokeEvent, volume: number): number => {
+      if (!soundEffects) throw new Error("Sound effects are not ready.");
+      return soundEffects.setVolume(volume);
+    },
+  );
 }
 
 backend.on("event", (event: BackendEvent) => {

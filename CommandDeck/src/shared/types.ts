@@ -163,6 +163,8 @@ export interface CommandDeckAPI {
   getSoundEffects(): Promise<SoundEffect[]>;
   getSoundEffectAudio(id: string): Promise<ArrayBuffer>;
   setSoundEffectOrder(order: string[]): Promise<SoundEffect[]>;
+  getSoundEffectVolume(): Promise<number>;
+  setSoundEffectVolume(volume: number): Promise<number>;
   getObsState(): Promise<ObsState>;
   startObsPreview(): Promise<void>;
   setObsScene(sceneName: string): Promise<void>;

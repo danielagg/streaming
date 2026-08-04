@@ -41,7 +41,7 @@ function TwitchPreview({ config }: { config: RendererConfig | null }) {
           <div className="mb-2.5 grid size-9 place-items-center border border-[#335055] bg-[#102024] text-primary">
             <ArrowUpRight className="size-4" />
           </div>
-          <strong className="text-[13px] text-[#d5dedf]">
+          <strong className="text-[13px] text-[#e4e4e7]">
             Twitch channel not configured
           </strong>
           <small className="mt-1.5 max-w-[340px] text-[10px] leading-relaxed text-muted-foreground">
@@ -171,7 +171,7 @@ function ObsPreview({ status }: { status: ConnectionState }) {
           <div className="mb-2.5 grid size-9 place-items-center border border-[#674a3f] bg-[#251714] text-[#df9a82]">
             <MonitorPlay className="size-4" />
           </div>
-          <strong className="text-[13px] text-[#d5dedf]">OBS preview unavailable</strong>
+          <strong className="text-[13px] text-[#e4e4e7]">OBS preview unavailable</strong>
           <small className="mt-1.5 max-w-[380px] text-[10px] leading-relaxed text-muted-foreground">
             {error}
           </small>
@@ -196,7 +196,7 @@ function ObsPreview({ status }: { status: ConnectionState }) {
               "size-2 fill-current",
               obsState.recording.active && !obsState.recording.paused
                 ? "text-[#ed655d]"
-                : "text-[#8a9699]",
+                : "text-[#a1a1aa]",
             )}
           />
           {recordingLabel}
@@ -221,7 +221,7 @@ export function TwitchStreamPanel({
       role="region"
       aria-label="Video monitor"
     >
-      <CardHeader className="flex h-9 shrink-0 grid-cols-none flex-row items-stretch border-b bg-[#0b0f11] p-0">
+      <CardHeader className="flex h-9 shrink-0 grid-cols-none flex-row items-stretch border-b bg-[#18181b] p-0">
         <div className="flex" role="tablist" aria-label="Video monitor source">
           {(
             [
@@ -239,8 +239,8 @@ export function TwitchStreamPanel({
                 aria-selected={selected}
                 aria-controls={`${id}-monitor-panel`}
                 className={cn(
-                  "relative flex items-center gap-1.5 border-0 border-r bg-transparent px-3 font-mono text-[9px] font-bold uppercase tracking-[.08em] text-muted-foreground outline-none transition-colors hover:bg-[#151c1f] hover:text-[#dce5e6] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary",
-                  selected && "bg-[#162125] text-primary",
+                  "relative flex items-center gap-1.5 border-0 border-r bg-transparent px-3 font-mono text-[9px] font-bold uppercase tracking-[.08em] text-muted-foreground outline-none transition-colors hover:bg-[#27272a] hover:text-[#e4e4e7] focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-primary",
+                  selected && "bg-[#27272a] text-primary",
                 )}
                 onClick={() => setActiveTab(id)}
               >
@@ -256,7 +256,7 @@ export function TwitchStreamPanel({
         id={`${activeTab}-monitor-panel`}
         role="tabpanel"
         aria-labelledby={`${activeTab}-monitor-tab`}
-        className="relative aspect-video overflow-hidden bg-[#030405] p-0"
+        className="relative aspect-video overflow-hidden bg-[#09090b] p-0"
       >
         {activeTab === "twitch" ? (
           <TwitchPreview config={config} />

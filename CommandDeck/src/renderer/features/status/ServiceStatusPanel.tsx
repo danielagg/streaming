@@ -48,7 +48,7 @@ function ServiceIndicator({
 
   return (
     <div
-      className="flex min-w-0 items-center gap-2 border-l border-[#253034] px-4"
+      className="flex min-w-0 items-center gap-2 border-l border-[#3f3f46] px-4"
       role="status"
       aria-label={`${name} ${statusLabel(state)}`}
     >
@@ -56,7 +56,7 @@ function ServiceIndicator({
         aria-hidden="true"
         className={cn("size-2 shrink-0 animate-pulse rounded-full", styles.dot)}
       />
-      <span className="font-mono text-[9px] font-bold uppercase tracking-[.09em] text-[#aeb9bc]">
+      <span className="font-mono text-[9px] font-bold uppercase tracking-[.09em] text-[#d4d4d8]">
         {name}
       </span>
       <span
@@ -78,7 +78,7 @@ export function ServiceStatusPanel({
 }: ServiceStatusPanelProps) {
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-12 bg-[#090d0f] md:col-span-12 md:row-start-3 md:min-h-0"
+      className="col-span-1 row-auto min-h-12 bg-[#18181b] md:col-span-12 md:row-start-3 md:min-h-0"
       role="region"
       aria-label="Service connections"
       aria-live="polite"

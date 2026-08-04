@@ -30,6 +30,10 @@ const api: CommandDeckAPI = Object.freeze({
     ipcRenderer.invoke("command-deck:get-sound-effect-audio", id) as Promise<ArrayBuffer>,
   setSoundEffectOrder: (order: string[]) =>
     ipcRenderer.invoke("command-deck:set-sound-effect-order", order) as Promise<SoundEffect[]>,
+  getSoundEffectVolume: () =>
+    ipcRenderer.invoke("command-deck:get-sound-effect-volume") as Promise<number>,
+  setSoundEffectVolume: (volume: number) =>
+    ipcRenderer.invoke("command-deck:set-sound-effect-volume", volume) as Promise<number>,
   getObsState: () =>
     ipcRenderer.invoke("command-deck:get-obs-state") as Promise<ObsState>,
   startObsPreview: () =>

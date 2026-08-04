@@ -19,7 +19,7 @@ const severityStyles: Record<ActiveAlert["severity"], string> = {
 export function AlertPanel({ alerts, onDismiss }: AlertPanelProps) {
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-16 bg-[#090d0f] md:col-span-12 md:row-start-2"
+      className="col-span-1 row-auto min-h-16 bg-[#18181b] md:col-span-12 md:row-start-2"
       role="region"
       aria-labelledby="alerts-title"
       aria-live="polite"

@@ -18,7 +18,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        deck: "border border-[#3d4446] bg-[linear-gradient(145deg,#33393b,#15191a_62%)] shadow-[inset_1px_1px_0_rgba(255,255,255,0.13),2px_3px_4px_rgba(0,0,0,0.7)] hover:brightness-110 active:translate-x-px active:translate-y-0.5 active:shadow-[inset_2px_2px_3px_#050606,1px_1px_2px_rgba(0,0,0,0.75)]",
+        deck: "border border-[#3f3f46] bg-[linear-gradient(145deg,#3f3f46,#202023_62%)] shadow-[inset_1px_1px_0_rgba(255,255,255,0.13),2px_3px_4px_rgba(0,0,0,0.7)] hover:brightness-110 active:translate-x-px active:translate-y-0.5 active:shadow-[inset_2px_2px_3px_#09090b,1px_1px_2px_rgba(0,0,0,0.75)]",
       },
       size: {
         default: "h-9 px-4 py-2",

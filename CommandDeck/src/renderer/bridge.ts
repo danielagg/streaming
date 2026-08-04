@@ -20,6 +20,8 @@ export interface DeckBridge {
   getSoundEffects(): Promise<SoundEffect[]>;
   getSoundEffectAudio(id: string): Promise<ArrayBuffer>;
   setSoundEffectOrder(order: string[]): Promise<SoundEffect[]>;
+  getSoundEffectVolume(): Promise<number>;
+  setSoundEffectVolume(volume: number): Promise<number>;
   subscribeSoundEffects(listener: (effects: SoundEffect[]) => void): () => void;
   subscribeChat(listener: (message: ChatMessage) => void): () => void;
   subscribeStatus(listener: (status: Partial<DeckStatus>) => void): () => void;
@@ -176,6 +178,8 @@ function createLiveBridge(): DeckBridge {
     getSoundEffects: () => api.getSoundEffects(),
     getSoundEffectAudio: (id) => api.getSoundEffectAudio(id),
     setSoundEffectOrder: (order) => api.setSoundEffectOrder(order),
+    getSoundEffectVolume: () => api.getSoundEffectVolume(),
+    setSoundEffectVolume: (volume) => api.setSoundEffectVolume(volume),
     subscribeSoundEffects: (listener) => api.onSoundEffectsChanged(listener),
     subscribeChat: (listener) => add(subscribers.chat, listener),
     subscribeStatus: (listener) => add(subscribers.status, listener),
@@ -210,6 +214,8 @@ function createDemoBridge(): DeckBridge {
     async getSoundEffects() { return []; },
     async getSoundEffectAudio() { throw new Error('Sound effects are only available in the desktop app.'); },
     async setSoundEffectOrder() { return []; },
+    async getSoundEffectVolume() { return 60; },
+    async setSoundEffectVolume(volume) { return volume; },
     subscribeSoundEffects() { return () => undefined; },
     subscribeChat(listener) {
       let cursor = 0;

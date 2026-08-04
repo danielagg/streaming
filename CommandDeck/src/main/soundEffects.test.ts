@@ -56,4 +56,32 @@ describe("SoundEffectsLibrary", () => {
 
     expect(() => library.setOrder(["Missing.mp3"])).toThrow(/does not match/);
   });
+
+  it("defaults volume to 60 and persists a 0 to 100 value", () => {
+    const { statePath, library } = fixture();
+
+    expect(library.getVolume()).toBe(60);
+    expect(library.setVolume(0)).toBe(0);
+    expect(new SoundEffectsLibrary("unused", statePath).getVolume()).toBe(0);
+    expect(library.setVolume(100)).toBe(100);
+  });
+
+  it("preserves volume when the sound order changes", () => {
+    const { directory, library } = fixture();
+    fs.writeFileSync(path.join(directory, "One.mp3"), "audio");
+    library.setVolume(35);
+
+    library.list();
+    library.setOrder(["One.mp3"]);
+
+    expect(library.getVolume()).toBe(35);
+  });
+
+  it("rejects volume values outside the integer 0 to 100 scale", () => {
+    const { library } = fixture();
+
+    expect(() => library.setVolume(-1)).toThrow(/0 to 100/);
+    expect(() => library.setVolume(101)).toThrow(/0 to 100/);
+    expect(() => library.setVolume(12.5)).toThrow(/0 to 100/);
+  });
 });

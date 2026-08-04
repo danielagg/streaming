@@ -26,9 +26,9 @@ export function ActionButton({
       type="button"
       variant="deck"
       className={cn(
-        "relative h-full w-full min-w-0 whitespace-normal rounded-none border bg-[#0e1315] px-2 py-3 text-center text-[10px] font-semibold leading-[1.2] text-balance text-[#b9c4c6] transition-[border-color,background-color,color,box-shadow,transform] [overflow-wrap:anywhere]",
+        "relative h-full w-full min-w-0 whitespace-normal rounded-none border bg-[#202023] px-2 py-3 text-center text-[10px] font-semibold leading-[1.2] text-balance text-[#d4d4d8] transition-[border-color,background-color,color,box-shadow,transform] [overflow-wrap:anywhere]",
         active &&
-          "translate-y-px bg-[#132024] text-[#edf5f5] disabled:opacity-100",
+          "translate-y-px bg-[#27272a] text-[#fafafa] disabled:opacity-100",
       )}
       style={
         active
