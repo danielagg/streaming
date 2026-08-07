@@ -12,7 +12,7 @@ export const DEFAULT_ACTIONS: ActionDefinition[] = [
   { action: "angry", label: "Angry" },
   { action: "embarrassed", label: "Embarrassed" },
   { action: "surprised", label: "Surprised" },
-  { action: "understanding", label: "Understanding" },
+  { action: "understanding", label: "Thinking" },
   { action: "vaping", label: "Vaping" },
 ];
 

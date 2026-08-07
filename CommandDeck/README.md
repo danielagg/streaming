@@ -9,8 +9,8 @@ designed to run fullscreen on a rotated monitor and currently contains:
   for Berry;
 - a manually managed, reorderable sound-effects panel;
 - live OBS scene controls with Starting Soon music-tail automation;
-- automatic PNGTuber Remix launch, state control, state restoration, and Croak
-  audio playback.
+- automatic PNGTuber Remix launch, state control, state restoration, Croak
+  audio playback, and native sprite movement for timed actions.
 
 The visible application is React and TypeScript inside a secure Electron shell.
 A bundled Python sidecar owns TwitchIO, PNGTuber Remix, and audio. Electron and
@@ -96,6 +96,12 @@ C:/Users/Daniel/Downloads/PNGTuber-Remix-win32-x86_64/PNGTuber-Remix.exe
 ```
 
 Update `remix.executablePath` if Remix moves.
+
+The optional `bounce` block on an action uses Remix's native sprite movement.
+`height` controls the upward travel in Remix coordinates, `durationMs` controls
+the full up-and-down motion, and `delayMs` aligns its apex to the sprite-sheet
+pose. Berry's Surprised defaults are `180`, `750`, and `150` respectively, so
+the jump clears foreground desk overlays without modifying the animation art.
 
 ## Develop
 

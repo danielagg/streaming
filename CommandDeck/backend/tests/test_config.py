@@ -19,6 +19,12 @@ def test_loads_root_camel_case_config(tmp_path):
                         "stateName": "Croaking",
                         "durationMs": 10,
                         "audioPath": "sound.mp3",
+                        "bounce": {
+                            "spriteName": "Berry",
+                            "height": 180,
+                            "durationMs": 750,
+                            "delayMs": 150,
+                        },
                     }
                 ],
             }
@@ -28,6 +34,11 @@ def test_loads_root_camel_case_config(tmp_path):
     config = load_config(path)
     assert config.actions[0].state_name == "Croaking"
     assert config.actions[0].audio_path == (tmp_path / "sound.mp3").resolve()
+    assert config.actions[0].bounce is not None
+    assert config.actions[0].bounce.sprite_name == "Berry"
+    assert config.actions[0].bounce.height == 180
+    assert config.actions[0].bounce.duration_ms == 750
+    assert config.actions[0].bounce.delay_ms == 150
 
 
 def test_rejects_duplicate_action_ids(tmp_path):

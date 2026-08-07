@@ -106,7 +106,13 @@
       "stateName": "Surprised",
       "description": "A startled hop, comic gasp, and quick landing.",
       "durationMs": 1400,
-      "accent": "#f3c94f"
+      "accent": "#f3c94f",
+      "bounce": {
+        "spriteName": "berry_surprised_hop_16f_4x4",
+        "height": 180,
+        "durationMs": 750,
+        "delayMs": 150
+      }
     },
     {
       "id": "understanding",

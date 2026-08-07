@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from command_deck.config import ActionDefinition
+from command_deck.config import ActionDefinition, BounceEffect
 from command_deck.controller import ActionController
 from command_deck.remix import MockRemixClient
 
@@ -53,3 +53,21 @@ async def test_missing_state_emits_error():
 
     await ActionController((action,), remix, emit, FakeAudio()).trigger("fly")
     assert events[0][0] == "berry.action.error"
+
+
+@pytest.mark.asyncio
+async def test_action_applies_configured_sprite_bounce():
+    action = ActionDefinition(
+        "surprised",
+        "Surprised",
+        "Surprised",
+        0,
+        bounce=BounceEffect("berry_surprised_hop_16f_4x4", 180, 750),
+    )
+    remix = MockRemixClient(["Surprised"])
+
+    async def emit(kind, payload, request_id):
+        return None
+
+    await ActionController((action,), remix, emit, FakeAudio()).trigger("surprised")
+    assert remix.bounces == [("berry_surprised_hop_16f_4x4", 180, 0.75)]

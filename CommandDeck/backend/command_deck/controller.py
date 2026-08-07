@@ -83,7 +83,16 @@ class ActionController:
                 },
                 request_id,
             )
-            await asyncio.sleep(action.duration_ms / 1000)
+            elapsed_ms = 0
+            if action.bounce:
+                await asyncio.sleep(action.bounce.delay_ms / 1000)
+                elapsed_ms = action.bounce.delay_ms
+                await self.remix.bounce_sprite(
+                    action.bounce.sprite_name,
+                    action.bounce.height,
+                    action.bounce.duration_ms / 1000,
+                )
+            await asyncio.sleep(max(0, action.duration_ms - elapsed_ms) / 1000)
         except Exception as error:  # noqa: BLE001 - action boundary reports failures
             failure = error
         finally:

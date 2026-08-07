@@ -8,6 +8,14 @@ from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
+class BounceEffect:
+    sprite_name: str
+    height: float
+    duration_ms: int
+    delay_ms: int = 0
+
+
+@dataclass(frozen=True, slots=True)
 class ActionDefinition:
     id: str
     name: str
@@ -17,6 +25,7 @@ class ActionDefinition:
     description: str = ""
     accent: str = "#ffffff"
     audio_path: Path | None = None
+    bounce: BounceEffect | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,6 +132,9 @@ def default_config() -> AppConfig:
                 "06",
                 "A startled hop, comic gasp, and quick landing.",
                 "#F3C94F",
+                bounce=BounceEffect(
+                    "berry_surprised_hop_16f_4x4", 180.0, 750, 150
+                ),
             ),
             ActionDefinition(
                 "understanding",
@@ -150,6 +162,26 @@ def _path(base: Path, value: Any) -> Path | None:
     return (base / str(value)).resolve() if value else None
 
 
+def _bounce_effect(value: Any) -> BounceEffect | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise TypeError("Action bounce settings must be an object.")
+    effect = BounceEffect(
+        sprite_name=str(value.get("sprite_name", value.get("spriteName", ""))),
+        height=float(value.get("height", 0)),
+        duration_ms=int(value.get("duration_ms", value.get("durationMs", 0))),
+        delay_ms=int(value.get("delay_ms", value.get("delayMs", 0))),
+    )
+    if not effect.sprite_name:
+        raise ValueError("Action bounce needs a sprite name.")
+    if effect.height <= 0 or effect.duration_ms <= 0 or effect.delay_ms < 0:
+        raise ValueError(
+            "Action bounce height/duration must be positive and delay non-negative."
+        )
+    return effect
+
+
 def load_config(path: Path | None) -> AppConfig:
     if path is None:
         return default_config()
@@ -165,6 +197,7 @@ def load_config(path: Path | None) -> AppConfig:
             description=str(item.get("description", "")),
             accent=str(item.get("accent", "#ffffff")),
             audio_path=_path(base, item.get("audio_path", item.get("audioPath"))),
+            bounce=_bounce_effect(item.get("bounce")),
         )
         for item in raw.get("actions", [])
     )

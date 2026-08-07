@@ -14,6 +14,9 @@ class RemixError(RuntimeError):
 class RemixAPI(Protocol):
     async def list_states(self) -> list[dict[str, Any]]: ...
     async def set_state(self, state_name: str) -> None: ...
+    async def bounce_sprite(
+        self, sprite_name: str, height: float, duration_seconds: float
+    ) -> None: ...
     async def close(self) -> None: ...
 
 
@@ -88,6 +91,18 @@ class RemixClient:
     async def set_state(self, state_name: str) -> None:
         await self.request({"event": "state", "state_name": state_name})
 
+    async def bounce_sprite(
+        self, sprite_name: str, height: float, duration_seconds: float
+    ) -> None:
+        await self.request(
+            {
+                "event": "bounce_sprite",
+                "sprite_name": sprite_name,
+                "height": height,
+                "duration": duration_seconds,
+            }
+        )
+
     async def close(self) -> None:
         socket, session = self._socket, self._session
         self._socket = self._session = None
@@ -104,6 +119,7 @@ class MockRemixClient:
         self.current = normal_state
         self.states = [normal_state, *action_states]
         self.transitions: list[str] = []
+        self.bounces: list[tuple[str, float, float]] = []
 
     async def list_states(self) -> list[dict[str, Any]]:
         return [
@@ -115,6 +131,11 @@ class MockRemixClient:
             raise RemixError(f"Remix has no state named '{state_name}'.")
         self.current = state_name
         self.transitions.append(state_name)
+
+    async def bounce_sprite(
+        self, sprite_name: str, height: float, duration_seconds: float
+    ) -> None:
+        self.bounces.append((sprite_name, height, duration_seconds))
 
     async def close(self) -> None:
         return None
