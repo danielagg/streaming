@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import ctypes
 import os
 import struct
 import subprocess
+from ctypes import wintypes
 from pathlib import Path
 
 from .config import AppConfig
@@ -11,6 +13,59 @@ GODOT_STRING_VARIANT = 21
 GODOT_BOOL_VARIANT = 1
 GODOT_INT_VARIANT = 2
 GODOT_FLOAT_VARIANT = 3
+
+
+def _is_process_running(executable: Path) -> bool:
+    """Return whether Windows already has a process with this executable name."""
+    if os.name != "nt":
+        return False
+
+    class ProcessEntry32W(ctypes.Structure):
+        _fields_ = [
+            ("dwSize", wintypes.DWORD),
+            ("cntUsage", wintypes.DWORD),
+            ("th32ProcessID", wintypes.DWORD),
+            ("th32DefaultHeapID", ctypes.c_size_t),
+            ("th32ModuleID", wintypes.DWORD),
+            ("cntThreads", wintypes.DWORD),
+            ("th32ParentProcessID", wintypes.DWORD),
+            ("pcPriClassBase", wintypes.LONG),
+            ("dwFlags", wintypes.DWORD),
+            ("szExeFile", wintypes.WCHAR * 260),
+        ]
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    create_snapshot = kernel32.CreateToolhelp32Snapshot
+    create_snapshot.argtypes = [wintypes.DWORD, wintypes.DWORD]
+    create_snapshot.restype = wintypes.HANDLE
+    process_first = kernel32.Process32FirstW
+    process_first.argtypes = [wintypes.HANDLE, ctypes.POINTER(ProcessEntry32W)]
+    process_first.restype = wintypes.BOOL
+    process_next = kernel32.Process32NextW
+    process_next.argtypes = [wintypes.HANDLE, ctypes.POINTER(ProcessEntry32W)]
+    process_next.restype = wintypes.BOOL
+    close_handle = kernel32.CloseHandle
+    close_handle.argtypes = [wintypes.HANDLE]
+    close_handle.restype = wintypes.BOOL
+
+    snapshot = create_snapshot(0x00000002, 0)  # TH32CS_SNAPPROCESS
+    if snapshot == ctypes.c_void_p(-1).value:
+        raise ctypes.WinError(ctypes.get_last_error())
+    entry = ProcessEntry32W()
+    entry.dwSize = ctypes.sizeof(entry)
+    expected_name = executable.name.casefold()
+    try:
+        has_entry = process_first(snapshot, ctypes.byref(entry))
+        while has_entry:
+            if entry.szExeFile.casefold() == expected_name:
+                return True
+            has_entry = process_next(snapshot, ctypes.byref(entry))
+        error = ctypes.get_last_error()
+        if error != 18:  # ERROR_NO_MORE_FILES
+            raise ctypes.WinError(error)
+        return False
+    finally:
+        close_handle(snapshot)
 
 
 def _signature(key: str, value_type: int) -> bytes:
@@ -75,7 +130,11 @@ def launch_remix(config: AppConfig) -> subprocess.Popen[bytes] | None:
     if not config.auto_launch_remix:
         return None
     executable, model = config.remix_executable_path, config.remix_model_path
-    if executable is None or not executable.is_file():
+    if executable is None:
+        raise FileNotFoundError(f"PNGTuber Remix was not found: {executable}")
+    if _is_process_running(executable):
+        return None
+    if not executable.is_file():
         raise FileNotFoundError(f"PNGTuber Remix was not found: {executable}")
     if model is None or not model.is_file():
         raise FileNotFoundError(f"Remix model was not found: {model}")
@@ -97,7 +156,11 @@ def launch_obs(config: AppConfig) -> subprocess.Popen[bytes] | None:
     if not config.obs.enabled or not config.obs.auto_launch:
         return None
     executable = config.obs.executable_path
-    if executable is None or not executable.is_file():
+    if executable is None:
+        raise FileNotFoundError(f"OBS Studio was not found: {executable}")
+    if _is_process_running(executable):
+        return None
+    if not executable.is_file():
         raise FileNotFoundError(f"OBS Studio was not found: {executable}")
     flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
     return subprocess.Popen(
