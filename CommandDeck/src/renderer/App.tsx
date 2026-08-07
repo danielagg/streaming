@@ -1,6 +1,7 @@
 import { ErrorToast } from "@/components/deck/ErrorToast";
 import { AlertPanel } from "@/features/alerts/AlertPanel";
 import { BerryControlsPanel } from "@/features/actions/BerryControlsPanel";
+import { CatchPhrasesPanel } from "@/features/catchPhrases/CatchPhrasesPanel";
 import { useCommandDeck } from "@/features/deck/useCommandDeck";
 import { TwitchChatPanel } from "@/features/twitch/TwitchChatPanel";
 import { TwitchStreamPanel } from "@/features/twitch/TwitchStreamPanel";
@@ -40,6 +41,7 @@ export function App() {
         <TwitchChatPanel config={config} />
         <SoundEffectsPanel />
         <ObsScenesPanel config={config} status={status.obs} />
+        <CatchPhrasesPanel />
       </div>
 
       {error && <ErrorToast message={error} onDismiss={dismissError} />}

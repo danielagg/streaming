@@ -110,7 +110,7 @@ export function ObsScenesPanel({
 
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-[240px] md:col-span-12 md:row-start-6 md:min-h-0"
+      className="col-span-1 row-auto min-h-[240px] md:col-span-6 md:col-start-1 md:row-start-6 md:min-h-0"
       role="region"
       aria-labelledby="obs-scenes-title"
     >

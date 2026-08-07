@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import type {
   BackendEvent,
   BerryActionId,
+  CatchPhrase,
   CommandDeckAPI,
   ObsState,
   RendererConfig,
@@ -34,6 +35,10 @@ const api: CommandDeckAPI = Object.freeze({
     ipcRenderer.invoke("command-deck:get-sound-effect-volume") as Promise<number>,
   setSoundEffectVolume: (volume: number) =>
     ipcRenderer.invoke("command-deck:set-sound-effect-volume", volume) as Promise<number>,
+  getCatchPhrases: () =>
+    ipcRenderer.invoke("command-deck:get-catch-phrases") as Promise<CatchPhrase[]>,
+  setCatchPhrases: (phrases: CatchPhrase[]) =>
+    ipcRenderer.invoke("command-deck:set-catch-phrases", phrases) as Promise<CatchPhrase[]>,
   getObsState: () =>
     ipcRenderer.invoke("command-deck:get-obs-state") as Promise<ObsState>,
   startObsPreview: () =>

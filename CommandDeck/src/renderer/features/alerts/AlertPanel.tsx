@@ -12,7 +12,7 @@ type AlertPanelProps = {
 
 const severityStyles: Record<ActiveAlert["severity"], string> = {
   info: "border-[#4a9198] text-[#9de5ea]",
-  warning: "border-[#a67d38] text-[#f0c872] bg-[#F0D095]",
+  warning: "border-[#a67d38] text-[#f0c872] bg-[#3d321c]",
   critical: "border-[#9a4d48] text-[#f0a19a]",
 };
 

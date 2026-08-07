@@ -178,8 +178,9 @@ export function SoundEffectsPanel() {
       className="col-span-1 row-auto md:col-span-12 md:row-start-5 md:min-h-0"
       role="region"
       aria-labelledby="sound-effects-title"
+      alternativeStyle
     >
-      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center justify-between border-b border-[#2f2f35] bg-[#202023] px-3">
+      <CardHeader className="flex h-[36px] shrink-0 grid-cols-none flex-row items-center justify-between px-3">
         <div>
           <CardTitle
             id="sound-effects-title"
@@ -199,14 +200,19 @@ export function SoundEffectsPanel() {
             aria-label="Sound effect volume"
             aria-valuetext={`${volume} percent`}
             className="h-1 w-24 cursor-pointer accent-[#58aeb5]"
-            onChange={(event) => changeVolume(Number(event.currentTarget.value))}
+            onChange={(event) =>
+              changeVolume(Number(event.currentTarget.value))
+            }
           />
-          <output className="w-6 text-right text-[10px] tabular-nums" aria-live="polite">
+          <output
+            className="w-6 text-right text-[10px] tabular-nums"
+            aria-live="polite"
+          >
             {volume}
           </output>
         </div>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-y-auto bg-[#18181b] p-2">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto p-2">
         {error && (
           <div
             role="alert"
@@ -221,7 +227,7 @@ export function SoundEffectsPanel() {
             <p className="m-0 text-xs">Add MP3 files to Audio\Manual.</p>
           </div>
         ) : (
-          <ol className="m-0 grid list-none grid-cols-2 gap-px p-0">
+          <ol className="m-0 grid list-none grid-cols-2 gap-1 p-0">
             {effects.map((effect, index) => {
               const isPlaying = playingId === effect.id;
               const isLoading = loadingId === effect.id;
@@ -229,10 +235,8 @@ export function SoundEffectsPanel() {
                 <li
                   key={effect.id}
                   className={cn(
-                    "flex h-7 min-w-0 items-center gap-0.5 border-b bg-[#202023] px-0.5 transition-colors",
-                    isPlaying
-                      ? "border-[#4d979d] bg-[#27272a]"
-                      : "border-[#3f3f46]",
+                    "flex h-7 min-w-0 items-center gap-0.5 border rounded px-0.5 transition-colors",
+                    isPlaying ? "border-[#4d979d]" : "border-[#28282c]",
                     dragTargetId === effect.id && "border-primary bg-[#27272a]",
                   )}
                   onDragOver={(event) => {
@@ -281,7 +285,7 @@ export function SoundEffectsPanel() {
 
                   <Button
                     type="button"
-                    variant="deck"
+                    variant="ghost"
                     size="icon"
                     className="size-5 rounded-sm"
                     disabled={isLoading}
@@ -303,7 +307,7 @@ export function SoundEffectsPanel() {
                         ) : (
                           <Play
                             aria-hidden="true"
-                            className="size-3  fill-current"
+                            className="size-3 fill-current"
                           />
                         )}
                       </>

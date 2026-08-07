@@ -12,6 +12,7 @@ import {
 import type {
   BackendEvent,
   BerryActionId,
+  CatchPhrase,
   ObsState,
   RendererConfig,
   SoundEffect,
@@ -19,6 +20,7 @@ import type {
   ServiceStatus,
 } from "../shared/types";
 import { BackendClient } from "./backend";
+import { CatchPhrasesLibrary } from "./catchPhrases";
 import { chooseLandscapeDisplay } from "./displays";
 import { loadRendererConfig } from "./runtimeConfig";
 import { chooseDisplay, rememberDisplay } from "./settings";
@@ -37,6 +39,7 @@ const obsState: ObsState = {
 let mainWindow: BrowserWindow | undefined;
 let rendererServer: RendererServer | undefined;
 let soundEffects: SoundEffectsLibrary | undefined;
+let catchPhrases: CatchPhrasesLibrary | undefined;
 let stopWatchingSoundEffects: (() => void) | undefined;
 
 function manualAudioDirectory(): string {
@@ -254,6 +257,17 @@ function registerIpc(): void {
       return soundEffects.setVolume(volume);
     },
   );
+  ipcMain.handle("command-deck:get-catch-phrases", (): CatchPhrase[] => {
+    if (!catchPhrases) throw new Error("Catch phrases are not ready.");
+    return catchPhrases.list();
+  });
+  ipcMain.handle(
+    "command-deck:set-catch-phrases",
+    (_event: IpcMainInvokeEvent, phrases: CatchPhrase[]): CatchPhrase[] => {
+      if (!catchPhrases) throw new Error("Catch phrases are not ready.");
+      return catchPhrases.replace(phrases);
+    },
+  );
 }
 
 backend.on("event", (event: BackendEvent) => {
@@ -283,6 +297,9 @@ void app.whenReady().then(async () => {
   soundEffects = new SoundEffectsLibrary(
     manualAudioDirectory(),
     path.join(app.getPath("userData"), "sound-effects.json"),
+  );
+  catchPhrases = new CatchPhrasesLibrary(
+    path.join(app.getPath("userData"), "catch-phrases.json"),
   );
   registerIpc();
   const devServer = process.env.VITE_DEV_SERVER_URL;

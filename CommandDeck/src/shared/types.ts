@@ -118,6 +118,11 @@ export interface SoundEffect {
   filename: string;
 }
 
+export interface CatchPhrase {
+  id: string;
+  text: string;
+}
+
 export type BackendEvent =
   | {
       type: "backend.ready";
@@ -165,6 +170,8 @@ export interface CommandDeckAPI {
   setSoundEffectOrder(order: string[]): Promise<SoundEffect[]>;
   getSoundEffectVolume(): Promise<number>;
   setSoundEffectVolume(volume: number): Promise<number>;
+  getCatchPhrases(): Promise<CatchPhrase[]>;
+  setCatchPhrases(phrases: CatchPhrase[]): Promise<CatchPhrase[]>;
   getObsState(): Promise<ObsState>;
   startObsPreview(): Promise<void>;
   setObsScene(sceneName: string): Promise<void>;

@@ -2,6 +2,7 @@ import type {
   AlertRuleDefinition,
   BackendEvent,
   BerryActionId,
+  CatchPhrase,
   ChatMessage as WireChatMessage,
   ObsState,
   RendererConfig,
@@ -22,6 +23,8 @@ export interface DeckBridge {
   setSoundEffectOrder(order: string[]): Promise<SoundEffect[]>;
   getSoundEffectVolume(): Promise<number>;
   setSoundEffectVolume(volume: number): Promise<number>;
+  getCatchPhrases(): Promise<CatchPhrase[]>;
+  setCatchPhrases(phrases: CatchPhrase[]): Promise<CatchPhrase[]>;
   subscribeSoundEffects(listener: (effects: SoundEffect[]) => void): () => void;
   subscribeChat(listener: (message: ChatMessage) => void): () => void;
   subscribeStatus(listener: (status: Partial<DeckStatus>) => void): () => void;
@@ -76,6 +79,10 @@ const DEMO_CHAT: Array<Omit<ChatMessage, 'id' | 'timestamp'>> = [
   { author: { displayName: 'NeonMoth', color: '#ff9db6', badges: ['VIP'] }, text: 'whiskey time?' },
   { author: { displayName: 'RookRadio', color: '#f4cb75' }, text: 'Audio is crisp and the scene transition was perfect.' },
   { author: { displayName: 'Cloudberry', color: '#a5e88b' }, text: 'Hello chat! Just got here 👋' },
+];
+
+let demoCatchPhrases: CatchPhrase[] = [
+  { id: 'jesus-mary-and-joseph', text: 'Jesus, Mary and Joseph' },
 ];
 
 function connectionState(state: string): ConnectionState {
@@ -180,6 +187,8 @@ function createLiveBridge(): DeckBridge {
     setSoundEffectOrder: (order) => api.setSoundEffectOrder(order),
     getSoundEffectVolume: () => api.getSoundEffectVolume(),
     setSoundEffectVolume: (volume) => api.setSoundEffectVolume(volume),
+    getCatchPhrases: () => api.getCatchPhrases(),
+    setCatchPhrases: (phrases) => api.setCatchPhrases(phrases),
     subscribeSoundEffects: (listener) => api.onSoundEffectsChanged(listener),
     subscribeChat: (listener) => add(subscribers.chat, listener),
     subscribeStatus: (listener) => add(subscribers.status, listener),
@@ -216,6 +225,11 @@ function createDemoBridge(): DeckBridge {
     async setSoundEffectOrder() { return []; },
     async getSoundEffectVolume() { return 60; },
     async setSoundEffectVolume(volume) { return volume; },
+    async getCatchPhrases() { return demoCatchPhrases.map((phrase) => ({ ...phrase })); },
+    async setCatchPhrases(phrases) {
+      demoCatchPhrases = phrases.map((phrase) => ({ ...phrase }));
+      return demoCatchPhrases.map((phrase) => ({ ...phrase }));
+    },
     subscribeSoundEffects() { return () => undefined; },
     subscribeChat(listener) {
       let cursor = 0;
