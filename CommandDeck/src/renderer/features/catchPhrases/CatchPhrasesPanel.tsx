@@ -138,7 +138,7 @@ export function CatchPhrasesPanel() {
 
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-[240px] md:col-span-6 md:col-start-7 md:row-start-6 md:min-h-0"
+      className="col-span-1 row-auto min-h-[180px] md:col-span-6 md:col-start-7"
       role="region"
       aria-labelledby="catch-phrases-title"
       alternativeStyle

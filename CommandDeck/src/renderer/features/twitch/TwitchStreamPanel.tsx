@@ -211,7 +211,7 @@ export function TwitchStreamPanel({
 
   return (
     <DeckPanel
-      className="col-span-1 row-auto md:col-span-12 md:row-start-1"
+      className="col-span-1 row-auto md:col-span-12"
       role="region"
       aria-label="Video monitor"
     >

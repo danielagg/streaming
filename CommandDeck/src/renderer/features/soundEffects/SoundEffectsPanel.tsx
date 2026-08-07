@@ -175,7 +175,7 @@ export function SoundEffectsPanel() {
 
   return (
     <DeckPanel
-      className="col-span-1 row-auto md:col-span-12 md:row-start-5 md:min-h-0"
+      className="col-span-1 row-auto md:col-span-6"
       role="region"
       aria-labelledby="sound-effects-title"
       alternativeStyle

@@ -78,7 +78,7 @@ export function ServiceStatusPanel({
 }: ServiceStatusPanelProps) {
   return (
     <DeckPanel
-      className="col-span-1 row-auto h-6 md:col-span-12 md:row-start-3 md:min-h-0"
+      className="col-span-1 row-auto h-6 md:col-span-12 md:min-h-0"
       role="region"
       aria-label="Service connections"
       aria-live="polite"

@@ -63,7 +63,9 @@ export function ObsScenesPanel({
       .catch((reason: unknown) => {
         if (active) {
           setError(
-            reason instanceof Error ? reason.message : "Could not read OBS state.",
+            reason instanceof Error
+              ? reason.message
+              : "Could not read OBS state.",
           );
         }
       });
@@ -81,6 +83,9 @@ export function ObsScenesPanel({
   const musicPlayingInStartingSoon =
     obsState.currentScene === startingSoonScene;
   const musicActive = musicPlayingInStartingSoon || musicTailActive;
+  const isOnMainScene =
+    obsState.currentScene ===
+    config?.obs.scenes.find((scene) => scene.id === "main")?.name;
 
   const selectScene = async (sceneName: string) => {
     if (!connected || pendingScene) return;
@@ -89,7 +94,11 @@ export function ObsScenesPanel({
     try {
       await deckBridge.setObsScene(sceneName);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not switch OBS scene.");
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not switch OBS scene.",
+      );
     } finally {
       setPendingScene(null);
     }
@@ -102,7 +111,9 @@ export function ObsScenesPanel({
     try {
       await deckBridge.stopObsMusic();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not stop OBS music.");
+      setError(
+        reason instanceof Error ? reason.message : "Could not stop OBS music.",
+      );
     } finally {
       setStoppingMusic(false);
     }
@@ -110,7 +121,7 @@ export function ObsScenesPanel({
 
   return (
     <DeckPanel
-      className="col-span-1 row-auto min-h-[240px] md:col-span-6 md:col-start-1 md:row-start-6 md:min-h-0"
+      className="col-span-1 row-auto min-h-[240px] md:min-h-0"
       role="region"
       aria-labelledby="obs-scenes-title"
     >
@@ -147,7 +158,7 @@ export function ObsScenesPanel({
                     type="button"
                     variant="deck"
                     className={cn(
-                      "relative h-auto min-h-[112px] flex-col gap-2 rounded-none border bg-[#202023] px-2 py-3 text-[#d4d4d8] transition-[border-color,background-color,color,box-shadow]",
+                      "relative h-auto min-h-[112px] flex-col gap-2 rounded-none border bg-[#202023] px-2 py-3 text-[#d4d4d8] transition-[border-color,background-color,color,box-shadow] md:min-h-[92px] md:gap-1.5 md:py-2",
                       active && "bg-[#27272a] text-[#fafafa]",
                     )}
                     style={
@@ -163,7 +174,10 @@ export function ObsScenesPanel({
                     onClick={() => void selectScene(scene.name)}
                   >
                     {loading ? (
-                      <LoaderCircle aria-hidden="true" className="size-6 animate-spin" />
+                      <LoaderCircle
+                        aria-hidden="true"
+                        className="size-6 animate-spin"
+                      />
                     ) : (
                       <Icon
                         aria-hidden="true"
@@ -174,51 +188,51 @@ export function ObsScenesPanel({
                     <span className="text-center text-xs font-semibold leading-tight">
                       {scene.label}
                     </span>
-                    {active && (
-                      <span
-                        className="absolute left-2 top-2 font-mono text-[7px] font-bold uppercase tracking-[.12em]"
-                        style={{ color: scene.accent }}
-                      >
-                        Live
-                      </span>
-                    )}
                   </Button>
                 );
               })}
             </div>
 
-            <div
-              className={cn(
-                "flex min-h-10 items-center gap-2 border px-3",
-                musicActive
-                  ? "border-[#76633a] bg-[#211b10] text-[#e2c77b]"
-                  : "border-[#3f3f46] bg-[#202023] text-muted-foreground",
-              )}
-            >
-              <Music2 aria-hidden="true" className="size-4 shrink-0" />
-              <span className="min-w-0 flex-1 text-[10px] font-medium">
-                {musicTailActive
-                  ? `Starting Soon music · ${obsState.musicTail.state === "fading" ? "fading" : "stopping"} in ${remainingTime(obsState.musicTail.remainingMs)}`
-                  : musicPlayingInStartingSoon
-                    ? "Starting Soon music · playing"
-                    : "Starting Soon music · stopped"}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 rounded-none border-[#52525b] bg-[#27272a] px-2 font-mono text-[8px] font-bold uppercase tracking-[.06em]"
-                disabled={!connected || !musicActive || stoppingMusic}
-                onClick={() => void stopMusic()}
-              >
-                {stoppingMusic ? (
-                  <LoaderCircle aria-hidden="true" className="size-3 animate-spin" />
-                ) : (
-                  <Square aria-hidden="true" className="size-2.5 fill-current" />
+            {musicActive && isOnMainScene && (
+              <div
+                className={cn(
+                  "flex min-h-10 items-center gap-2 px-3 rounded-lg",
+                  musicActive
+                    ? "bg-[#211b10] text-[#e2c77b]"
+                    : "bg-transparent text-muted-foreground",
                 )}
-                Stop music
-              </Button>
-            </div>
+              >
+                <Music2 aria-hidden="true" className="size-4 shrink-0" />
+                <span className="min-w-0 flex-1 text-[10px] font-medium">
+                  {musicTailActive
+                    ? `Starting Soon music · ${obsState.musicTail.state === "fading" ? "fading" : "stopping"} in ${remainingTime(obsState.musicTail.remainingMs)}`
+                    : musicPlayingInStartingSoon
+                      ? "Starting Soon music · playing"
+                      : "Starting Soon music · stopped"}
+                </span>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 rounded px-2 font-mono text-[8px] font-bold uppercase tracking-[.06em]"
+                  disabled={!connected || !musicActive || stoppingMusic}
+                  onClick={() => void stopMusic()}
+                >
+                  {stoppingMusic ? (
+                    <LoaderCircle
+                      aria-hidden="true"
+                      className="size-3 animate-spin"
+                    />
+                  ) : (
+                    <Square
+                      aria-hidden="true"
+                      className="size-2.5 fill-current"
+                    />
+                  )}
+                </Button>
+              </div>
+            )}
           </>
         )}
       </CardContent>

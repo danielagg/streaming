@@ -48,7 +48,7 @@ export function TwitchChatPanel({
   return (
     <DeckPanel
       className={cn(
-        "relative col-span-1 row-auto min-h-[380px] md:col-start-7 md:col-end-13 md:row-start-4 md:min-h-0",
+        "relative col-span-1 row-auto min-h-[380px] md:col-span-6 md:h-full md:min-h-0",
         chatExpanded &&
           "fixed inset-1 z-40 size-auto min-h-0 shadow-[0_0_0_4px_#09090b]",
       )}
