@@ -6,6 +6,7 @@ param(
     [string]$AngryState = "Angry",
     [string]$EmbarrassedState = "Embarrassed",
     [string]$SurprisedState = "Surprised",
+    [string]$SurprisedSprite = "berry_surprised_hop_16f_4x4",
     [string]$UnderstandingState = "Understanding",
     [string]$VapingState = "Vaping"
 )
@@ -83,7 +84,11 @@ function Play-Action {
         [string]$StateName,
         [string]$ReturnStateName,
         [int]$DurationMs,
-        [System.Windows.Media.MediaPlayer]$AudioPlayer
+        [System.Windows.Media.MediaPlayer]$AudioPlayer,
+        [string]$BounceSpriteName = "",
+        [double]$BounceHeight = 0,
+        [int]$BounceDurationMs = 0,
+        [int]$BounceDelayMs = 0
     )
 
     [void](Send-Request -Socket $Socket -Message @{
@@ -97,7 +102,18 @@ function Play-Action {
             $AudioPlayer.Position = [TimeSpan]::Zero
             $AudioPlayer.Play()
         }
-        Start-Sleep -Milliseconds $DurationMs
+        $elapsedMs = 0
+        if ($BounceSpriteName) {
+            Start-Sleep -Milliseconds $BounceDelayMs
+            $elapsedMs = $BounceDelayMs
+            [void](Send-Request -Socket $Socket -Message @{
+                event = "bounce_sprite"
+                sprite_name = $BounceSpriteName
+                height = $BounceHeight
+                duration = $BounceDurationMs / 1000.0
+            })
+        }
+        Start-Sleep -Milliseconds ([Math]::Max(0, $DurationMs - $elapsedMs))
     }
     finally {
         if ($null -ne $AudioPlayer) {
@@ -275,7 +291,11 @@ try {
                             -StateName $SurprisedState `
                             -ReturnStateName $normalState.name `
                             -DurationMs 1400 `
-                            -AudioPlayer $null
+                            -AudioPlayer $null `
+                            -BounceSpriteName $SurprisedSprite `
+                            -BounceHeight 180 `
+                            -BounceDurationMs 750 `
+                            -BounceDelayMs 150
                     }
                     F19 {
                         Write-Host "Understanding"

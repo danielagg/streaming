@@ -43,6 +43,11 @@ Embarrassed. Start at Remix Size X/Y `1.00`.
 8. Command Deck exposes Surprised as action `06`. The legacy helper uses a
    triple-tap of `F18`; do not also bind F18 inside Remix.
 
+Both controls send Remix's native `bounce_sprite` movement after switching to
+the state: `180` height over `750 ms`, delayed by `150 ms` so its apex matches
+frames 5–6. Adjust those values in `CommandDeck/config.json` for action 06, or
+in `berry_actions.ps1` for the legacy F18 helper. No art change is required.
+
 ## Files
 
 - `sources/surprised_key_pose_chroma.png`: preserved generated chroma master
